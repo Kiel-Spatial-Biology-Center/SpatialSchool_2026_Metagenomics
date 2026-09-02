@@ -1,8 +1,13 @@
 # Micro-scale spatial metagenomics — student practical
 
+Practical for the **Kiel Spatial Biology Summer Course 2026**.
+
 A teaching version of the analysis behind *"Micro-scale spatial metagenomics:
 revealing high-resolution spatial biogeography of gut microbiomes"*
 ([3D'omics](http://www.3domics.eu), Horizon 2020).
+
+**Read the book online:**
+<https://kiel-spatial-biology-center.github.io/SpatialSchool_2026_Metagenomics>
 
 It keeps only what is needed to understand **how spatial structure in a gut
 microbiome is detected and tested**, and drops the method validation,
@@ -59,7 +64,10 @@ catalogue.
 
 ## Running it
 
-Open `MSSM_practical.Rproj` in RStudio and knit, or:
+The rendered HTML book is available at
+<https://kiel-spatial-biology-center.github.io/SpatialSchool_2026_Metagenomics>,
+so it can be followed without running anything. To build it locally, open
+`MSSM_practical.Rproj` in RStudio and knit, or:
 
 ```r
 bookdown::render_book(input = ".", output_format = "bookdown::gitbook",
