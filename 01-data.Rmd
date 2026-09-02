@@ -1,0 +1,300 @@
+# What a microsample looks like {#data}
+
+Before any spatial analysis, we need a community table we can trust. This
+chapter builds one from raw mapping output and shows why micro-scale data needs
+a filtering step that ordinary metagenomics can skip.
+
+## The raw tables
+
+Reads from each microsample were mapped against the catalogue of 223 genomes.
+That produces two tables of exactly the same shape.
+
+```{r peek_counts, warning = FALSE, message = FALSE}
+# how many reads from each microsample mapped to each genome
+genome_read_counts[1:5, 1:4]
+
+# how many bases of each genome those reads covered
+genome_covered_bases[1:5, 1:4]
+
+dim(genome_read_counts)   # genomes x (1 + microsamples)
+```
+
+And a table describing the microsamples themselves:
+
+```{r peek_metadata, warning = FALSE, message = FALSE}
+sample_metadata %>%
+  select(microsample, cryosection, region, Xcoord, Ycoord, distance_host,
+         after_filtering.total_bases) %>%
+  head()
+```
+
+`Xcoord` and `Ycoord` are the position of the microsample on the cryosection in
+micrometres. `distance_host` is how far it sits from the epithelium — the gut
+wall — which is the gradient we will eventually be testing against.
+
+::: {.rmdnote}
+**Scale check.** A microsample covers a few hundred micrometres. The whole
+cryosection is a couple of millimetres across. The 168 microsamples of one
+section together weigh less than a grain of salt.
+:::
+
+## Sequencing depth is data here, not a nuisance
+
+The introduction described the unnormalised pooling protocol. You can verify it
+in the metadata: every microsample was cut to the same area and given the same
+number of PCR cycles.
+
+```{r design_check, warning = FALSE, message = FALSE}
+sample_metadata %>%
+  count(cryosection, size, cycles, name = "microsamples")
+```
+
+Identical input area, identical amplification, no equimolar normalisation. So
+how much do the resulting library sizes differ?
+
+```{r depth_range, warning = FALSE, message = FALSE}
+sample_metadata %>%
+  group_by(cryosection) %>%
+  summarise(
+    total_Gb   = round(sum(after_filtering.total_bases) / 1e9, 1),
+    min_Mb     = round(min(after_filtering.total_bases) / 1e6, 1),
+    median_Mb  = round(median(after_filtering.total_bases) / 1e6, 1),
+    max_Mb     = round(max(after_filtering.total_bases) / 1e6, 1),
+    fold_range = round(max(after_filtering.total_bases) /
+                       min(after_filtering.total_bases)),
+    .groups = "drop"
+  )
+```
+
+A **400- to 1,400-fold** spread, between pieces of tissue of identical size
+processed identically. Under equimolar pooling this range would have been
+flattened to near-uniform by design. Here it survives, and the most plausible
+thing it reflects is how much microbial biomass each microsample contained.
+
+```{r depth_dist, warning = FALSE, message = FALSE, fig.height = 3.5, fig.width = 7}
+ggplot(sample_metadata,
+       aes(x = after_filtering.total_bases, fill = region)) +
+  geom_histogram(bins = 40, alpha = 0.85, position = "identity") +
+  scale_x_log10(labels = scales::label_number(scale = 1e-6, suffix = " Mb")) +
+  scale_fill_manual(values = region_colors) +
+  labs(x = "Sequenced bases per microsample (log scale)",
+       y = "Microsamples", fill = "Region")
+```
+
+Keep this in mind for the rest of the practical. When sequencing depth turns up
+as a strong predictor in Chapter \@ref(space), the reflex from ordinary
+metagenomics — *that is a technical artefact, control for it* — is the wrong
+reflex. Under this protocol it is a biological quantity in disguise.
+
+It is not a clean one, though. Depth also determines how many genomes you can
+possibly detect, so richness and depth are confounded by construction. We will
+see exactly how strongly in a moment.
+
+## Why micro-scale data needs a coverage filter
+
+Each microsample contains very little DNA, so it is sequenced shallowly. Look
+at how many genomes appear to be present in a typical microsample if we simply
+count non-zero entries:
+
+```{r naive_richness, warning = FALSE, message = FALSE}
+naive_present <- colSums(genome_read_counts[, -1] > 0)
+
+summary(naive_present)
+```
+
+Almost every genome in the catalogue picks up *some* reads in *some*
+microsample. That cannot all be real. Short read mapping is a heuristic: a read
+from a genome that is genuinely present will also align, imperfectly, to its
+relatives. Those stray reads land scattered across the wrong genome.
+
+That scattering is what lets us tell the two cases apart. A genome that is
+really there gets covered **evenly along its length**; a genome that only
+catches stray reads gets a few isolated patches. So instead of asking *how many
+reads*, we ask *how much of the genome was covered*.
+
+```{r coverage, warning = FALSE, message = FALSE}
+genome_coverage <- breadth_of_coverage(genome_covered_bases, genome_metadata)
+
+genome_coverage[1:5, 1:4]
+```
+
+```{r coverage_hist, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 7}
+coverage_long <- genome_coverage %>%
+  pivot_longer(-genome, names_to = "microsample", values_to = "coverage") %>%
+  filter(coverage > 0)
+
+ggplot(coverage_long, aes(x = coverage)) +
+  geom_histogram(bins = 60, fill = "#4a6ab7", colour = NA) +
+  geom_vline(xintercept = 0.3, linetype = "dashed", colour = "#E76F51",
+             linewidth = 0.8) +
+  annotate("text", x = 0.33, y = Inf, label = "  0.3 threshold",
+           hjust = 0, vjust = 2, colour = "#E76F51", size = 3.5) +
+  scale_y_log10() +
+  labs(x = "Fraction of genome length covered",
+       y = "Genome × microsample pairs (log scale)",
+       title = "Breadth of coverage is strongly bimodal")
+```
+
+The distribution has two humps: a large one near zero (genomes catching a
+handful of stray reads) and a smaller one at high coverage (genomes genuinely
+present). Almost nothing sits in between, which is what makes a threshold
+defensible. We use **0.3**, as in the published analysis.
+
+## Filtering and normalising
+
+Two operations turn the raw table into a community table.
+
+**Coverage filtering** zeroes out any genome–microsample pair below the
+threshold:
+
+```{r filtering, warning = FALSE, message = FALSE}
+read_counts_filt <- filter_by_coverage(genome_read_counts, genome_coverage,
+                                       min_coverage = 0.3)
+
+tibble(
+  step = c("before filtering", "after filtering"),
+  nonzero_entries = c(sum(genome_read_counts[, -1] > 0),
+                      sum(read_counts_filt[, -1] > 0)),
+  reads_kept_pct = c(100, round(100 * sum(read_counts_filt[, -1]) /
+                                  sum(genome_read_counts[, -1]), 1))
+)
+```
+
+Note what happened: most *entries* are discarded, but almost all *reads* are
+kept. The filter removes a huge number of near-empty cells that were carrying
+very little signal.
+
+**Length normalisation** converts read counts into genome counts. A 6 Mb genome
+captures twice as many reads as a 3 Mb genome at equal abundance, so we divide
+by genome length expressed in reads:
+
+```{r genome_counts, warning = FALSE, message = FALSE}
+genome_counts <- to_genome_counts(read_counts_filt, genome_metadata,
+                                  read_length = 150)
+
+genome_counts[1:5, 1:4]
+```
+
+::: {.rmdnote}
+**Why not rarefy?** Rarefying subsamples every microsample down to a common
+depth. That would throw away exactly the quantity this protocol went to trouble
+to preserve — the depth differences that track biomass — and it would still
+leave the *within*-microsample counts compositional. Chapter \@ref(space)
+instead splits the problem in two: a log-ratio transformation for what the
+community is made of, and depth kept as its own variable for how much of it
+there was.
+:::
+
+## Diversity per microsample
+
+With a community table we can ask how diverse each microsample is. We use Hill
+numbers, which put richness and evenness on the same scale (effective number of
+genomes):
+
+```{r diversity, warning = FALSE, message = FALSE}
+diversity <- alpha_diversity(genome_counts, genome_tree)
+
+sample_metadata <- sample_metadata %>%
+  left_join(diversity, by = "microsample")
+
+sample_metadata %>%
+  group_by(region) %>%
+  summarise(
+    microsamples  = n(),
+    richness      = median(richness),
+    neutral       = round(median(neutral), 1),
+    phylogenetic  = round(median(phylogenetic), 1),
+    .groups = "drop"
+  )
+```
+
+| Metric | q | Reads as |
+|---|---|---|
+| `richness` | 0 | how many genomes are present |
+| `neutral` | 1 | how many genomes are *effectively* present, weighting by abundance |
+| `phylogenetic` | 1 | same, but close relatives count as partly redundant |
+
+Richness far above neutral diversity means a microsample is dominated by a few
+genomes with a long rare tail — which is exactly what these communities look
+like.
+
+And here is the confounding promised above:
+
+```{r depth_richness, warning = FALSE, message = FALSE, fig.height = 3.5, fig.width = 7}
+sample_metadata %>%
+  filter(richness > 0) %>%
+  ggplot(aes(x = after_filtering.total_bases, y = richness, colour = region)) +
+  geom_point(size = 1.3, alpha = 0.75) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.7) +
+  scale_x_log10(labels = scales::label_number(scale = 1e-6, suffix = " Mb")) +
+  scale_colour_manual(values = region_colors) +
+  labs(x = "Sequenced bases (log scale)", y = "Richness", colour = "Region")
+```
+
+```{r depth_richness_cor, warning = FALSE, message = FALSE}
+sample_metadata %>%
+  filter(richness > 0) %>%
+  group_by(region) %>%
+  summarise(spearman_rho = round(cor(richness,
+                                     log(after_filtering.total_bases),
+                                     method = "spearman"), 2),
+            .groups = "drop")
+```
+
+ρ above 0.9. Two mechanisms produce that, and this dataset cannot separate them:
+a microsample with more biomass genuinely holds more genomes, **and** a
+microsample sequenced more deeply detects more of whatever it holds. Both are
+real; neither can be switched off. Any claim resting on richness alone in this
+kind of data is on thin ice.
+
+```{r diversity_plot, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 7}
+sample_metadata %>%
+  pivot_longer(c(richness, neutral, phylogenetic),
+               names_to = "metric", values_to = "diversity") %>%
+  mutate(metric = factor(metric,
+                         levels = c("richness", "neutral", "phylogenetic"))) %>%
+  ggplot(aes(x = region, y = diversity, fill = region)) +
+  geom_boxplot(outlier.size = 0.6, width = 0.6, alpha = 0.85) +
+  facet_wrap(~ metric, scales = "free_y") +
+  scale_fill_manual(values = region_colors, guide = "none") +
+  labs(x = NULL, y = "Diversity (effective number of genomes)")
+```
+
+## Who is actually there
+
+```{r composition, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 9}
+composition <- genome_counts %>%
+  pivot_longer(-genome, names_to = "microsample", values_to = "count") %>%
+  group_by(microsample) %>%
+  mutate(rel = count / sum(count)) %>%
+  ungroup() %>%
+  left_join(genome_metadata %>% select(genome, phylum, order),
+            by = "genome") %>%
+  left_join(sample_metadata %>% select(microsample, region, distance_host),
+            by = "microsample") %>%
+  filter(rel > 0)
+
+composition %>%
+  # order microsamples by distance to the gut wall, the gradient of interest
+  mutate(microsample = fct_reorder(microsample, distance_host)) %>%
+  ggplot(aes(x = microsample, y = rel, fill = order)) +
+  geom_col(width = 1) +
+  facet_grid(~ region, scales = "free_x", space = "free_x") +
+  scale_fill_manual(values = order_colors) +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Microsample (ordered by distance to gut wall →)",
+       y = "Relative abundance", fill = "Order") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        legend.key.size = unit(0.35, "cm"), legend.text = element_text(size = 7))
+```
+
+Two things are already visible, and they set up the rest of the practical:
+
+1. **Caecum and colon are different communities.** No surprise — they are
+   different organs.
+2. **Within each section, neighbouring bars resemble each other.** Microsamples
+   are sorted here by distance to the gut wall, and the composition does not
+   look randomly shuffled along that axis.
+
+Point 2 is a hint, not evidence. A barplot sorted by a variable will always
+look somewhat ordered. Chapter \@ref(space) tests it properly.

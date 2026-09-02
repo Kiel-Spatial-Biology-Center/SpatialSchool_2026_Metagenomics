@@ -1,0 +1,838 @@
+<title>MSSM Practical</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* ---------- tokens: light is the base, dark redefines only values ---------- */
+:root{
+  --ground:#f2f5f3; --surface:#ffffff; --sunk:#e8ede9;
+  --ink:#14201d; --body:#2c3a36; --muted:#5d6d69; --rule:#d7dfdb;
+  --teal:#1c7a6b; --coral:#c4522e; --blue:#3d59a8; --amber:#a8701a;
+  --teal-wash:#e2efec; --amber-wash:#fbf2e3; --blue-wash:#e7ebf6;
+  --shadow:0 1px 2px rgba(20,32,29,.06), 0 8px 28px rgba(20,32,29,.07);
+  --stage-w:1280px; --stage-h:720px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0d1513; --surface:#16211e; --sunk:#101a17;
+    --ink:#e7eeeb; --body:#c6d2ce; --muted:#8f9f9b; --rule:#26332f;
+    --teal:#4fcbb3; --coral:#f18b63; --blue:#8098e2; --amber:#dfa356;
+    --teal-wash:#132a26; --amber-wash:#2a2117; --blue-wash:#181f33;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 34px rgba(0,0,0,.42);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0d1513; --surface:#16211e; --sunk:#101a17;
+  --ink:#e7eeeb; --body:#c6d2ce; --muted:#8f9f9b; --rule:#26332f;
+  --teal:#4fcbb3; --coral:#f18b63; --blue:#8098e2; --amber:#dfa356;
+  --teal-wash:#132a26; --amber-wash:#2a2117; --blue-wash:#181f33;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 34px rgba(0,0,0,.42);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--body);
+  font-family:'Source Sans 3','Helvetica Neue',Helvetica,Arial,sans-serif;
+  margin:0; min-height:100vh; overflow:hidden;
+}
+:focus-visible{outline:2px solid var(--teal); outline-offset:3px; border-radius:3px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important; transition:none!important}}
+
+/* ---------- stage: fixed 16:9, scaled to the viewport ---------- */
+#viewport{position:fixed; inset:0; display:grid; place-items:center}
+#stage{
+  width:var(--stage-w); height:var(--stage-h);
+  background:var(--ground); position:relative; transform-origin:center center;
+}
+.slide{
+  position:absolute; inset:0; padding:56px 72px 76px;
+  display:none; flex-direction:column; overflow:hidden;
+}
+.slide.on{display:flex; animation:rise .32s cubic-bezier(.2,.7,.3,1)}
+@keyframes rise{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+
+/* ---------- type ---------- */
+.eyebrow{
+  font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+  display:flex; align-items:center; gap:10px; margin-bottom:18px;
+}
+.eyebrow .tick{width:22px; height:2px; background:var(--teal); border-radius:1px}
+.eyebrow .lc{text-transform:none; letter-spacing:.02em}
+h1{
+  font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif; font-weight:700;
+  font-size:62px; line-height:1.03; letter-spacing:-.02em; color:var(--ink);
+  margin:0 0 20px; text-wrap:balance; max-width:19ch;
+}
+h2{
+  font-family:Archivo,'Helvetica Neue',Helvetica,Arial,sans-serif; font-weight:600;
+  font-size:40px; line-height:1.1; letter-spacing:-.015em; color:var(--ink);
+  margin:0 0 20px; text-wrap:balance; max-width:24ch;
+}
+h2.tight{margin-bottom:14px}
+p{font-size:20px; line-height:1.5; margin:0 0 16px; max-width:62ch}
+p.lead{font-size:24px; line-height:1.45; color:var(--ink)}
+p.small{font-size:17px; color:var(--muted)}
+strong{color:var(--ink); font-weight:600}
+em{color:var(--ink)}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums}
+.teal{color:var(--teal)} .coral{color:var(--coral)}
+.blue{color:var(--blue)} .amber{color:var(--amber)}
+
+/* ---------- layout helpers ---------- */
+.body{flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center}
+.cols{display:grid; gap:34px; align-items:start}
+.c2{grid-template-columns:1fr 1fr}
+.c25{grid-template-columns:1.15fr 1fr}
+.c52{grid-template-columns:1fr .82fr}
+.stack{display:flex; flex-direction:column; gap:14px}
+
+.card{
+  background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+  padding:22px 24px; box-shadow:var(--shadow);
+}
+.card h3{
+  font-family:Archivo,sans-serif; font-size:16px; font-weight:600; color:var(--ink);
+  margin:0 0 10px; letter-spacing:-.01em;
+}
+.card p{font-size:17px; margin:0; line-height:1.45}
+.card h3.teal{color:var(--teal)} .card h3.coral{color:var(--coral)}
+.card h3.blue{color:var(--blue)} .card h3.amber{color:var(--amber)}
+.card.flag{background:var(--amber-wash); border-color:var(--amber)}
+.card.good{background:var(--teal-wash); border-color:var(--teal)}
+
+/* stat block */
+.stat{display:flex; flex-direction:column; gap:2px}
+.stat .n{
+  font-family:Archivo,sans-serif; font-weight:700; font-size:46px; line-height:1;
+  color:var(--ink); letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+}
+.stat .n.sm{font-size:34px}
+.stat .n.teal{color:var(--teal)} .stat .n.coral{color:var(--coral)}
+.stat .n.blue{color:var(--blue)} .stat .n.amber{color:var(--amber)}
+.stat .k{font-size:15px; color:var(--muted); line-height:1.35; max-width:22ch}
+.statrow{display:grid; grid-template-columns:repeat(3,1fr); gap:28px}
+.statrow.four{grid-template-columns:repeat(4,1fr)}
+
+/* table */
+table{border-collapse:collapse; width:100%; font-size:17px}
+caption{
+  caption-side:top; text-align:left; font-size:13px; color:var(--muted);
+  padding-bottom:8px; font-family:'IBM Plex Mono',monospace; letter-spacing:.06em;
+  text-transform:uppercase;
+}
+caption .lc{text-transform:none}
+th{
+  text-align:left; font-weight:600; font-size:13px; color:var(--muted);
+  letter-spacing:.06em; text-transform:uppercase; padding:0 12px 8px 0;
+  border-bottom:1px solid var(--rule); white-space:nowrap;
+}
+th .lc{text-transform:none}   /* Greek letters must not be uppercased */
+td{padding:9px 12px 9px 0; border-bottom:1px solid var(--rule); color:var(--body)}
+td:first-child{color:var(--ink)}
+th.num,td.num{text-align:right; font-family:'IBM Plex Mono',monospace;
+  font-variant-numeric:tabular-nums; padding-right:0}
+tr.hi td{background:var(--teal-wash); color:var(--ink); font-weight:600}
+tr.dim td{color:var(--muted)}
+.tablewrap{overflow-x:auto}
+
+.pill{
+  display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600;
+  padding:4px 11px; border-radius:20px; border:1px solid currentColor;
+  font-family:'IBM Plex Mono',monospace; letter-spacing:.04em;
+}
+.pill.ns{color:var(--muted)}
+.pill.sig{color:var(--teal)}
+
+.figplate{
+  background:#fff; border:1px solid var(--rule); border-radius:10px; padding:10px;
+  box-shadow:var(--shadow); display:grid; place-items:center;
+}
+.figplate img{display:block; width:100%; height:auto; border-radius:4px}
+.svgplate{background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+  padding:8px; box-shadow:var(--shadow); width:100%; max-width:812px;
+  margin-inline:auto}
+.svgplate svg{display:block; width:100%; height:auto}
+:root[data-theme="dark"] .svgplate, :root[data-theme="dark"] .figplate{background:#fff}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .svgplate,
+  :root:not([data-theme="light"]) .figplate{background:#fff}
+}
+
+.arrowlist{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px}
+.arrowlist li{display:grid; grid-template-columns:26px 1fr; gap:12px; font-size:19px;
+  line-height:1.45; align-items:start}
+.arrowlist .m{font-family:'IBM Plex Mono',monospace; font-size:15px; color:var(--teal);
+  font-weight:500; padding-top:2px}
+
+.quote{
+  border-left:3px solid var(--teal); padding:4px 0 4px 22px; margin:0;
+  font-size:27px; line-height:1.35; color:var(--ink); font-weight:400; max-width:34ch;
+}
+
+/* five-table strip */
+.tables5{display:grid; grid-template-columns:repeat(5,1fr); gap:12px}
+.t5{background:var(--surface); border:1px solid var(--rule); border-radius:9px;
+  padding:14px 14px 16px; box-shadow:var(--shadow)}
+.t5 .k{font-family:Archivo,sans-serif; font-weight:700; font-size:26px; line-height:1;
+  margin-bottom:8px}
+.t5 .n{font-size:14px; font-weight:600; color:var(--ink); margin-bottom:5px}
+.t5 .d{font-size:13px; color:var(--muted); line-height:1.35}
+
+/* ---------- chrome ---------- */
+#rail{
+  position:absolute; left:72px; right:72px; bottom:26px;
+  display:flex; align-items:center; gap:16px;
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted);
+  letter-spacing:.08em;
+}
+#railchap{text-transform:uppercase}
+#railbar{flex:1; height:2px; background:var(--rule); border-radius:1px; overflow:hidden}
+#railfill{height:100%; width:0; background:var(--teal); transition:width .3s ease}
+#railnum{font-variant-numeric:tabular-nums}
+
+#tools{position:fixed; top:14px; right:16px; display:flex; gap:8px; z-index:30}
+#tools button{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em;
+  background:var(--surface); color:var(--muted); border:1px solid var(--rule);
+  border-radius:6px; padding:6px 10px; cursor:pointer;
+}
+#tools button:hover{color:var(--ink); border-color:var(--muted)}
+
+#index{
+  position:fixed; inset:0; background:var(--ground); z-index:40;
+  padding:44px 56px; overflow-y:auto;
+}
+#index h2{font-size:26px; margin-bottom:6px}
+#index p.small{margin-bottom:22px}
+#idxlist{display:grid; grid-template-columns:repeat(3,1fr); gap:8px 26px;
+  list-style:none; padding:0; margin:0}
+#idxlist li{margin:0}
+#idxlist button{
+  width:100%; text-align:left; background:none; border:0; cursor:pointer;
+  display:grid; grid-template-columns:32px 1fr; gap:10px; padding:7px 8px;
+  border-radius:6px; color:var(--body); font-family:inherit; font-size:15px;
+  border-left:2px solid transparent;
+}
+#idxlist button:hover{background:var(--sunk); color:var(--ink)}
+#idxlist button .i{font-family:'IBM Plex Mono',monospace; color:var(--muted); font-size:13px}
+#idxlist button.cur{border-left-color:var(--teal); color:var(--ink); font-weight:600}
+#idxlist li.head{grid-column:1/-1; margin-top:14px; font-family:'IBM Plex Mono',monospace;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--teal);
+  border-bottom:1px solid var(--rule); padding-bottom:5px}
+#idxlist li.head:first-child{margin-top:0}
+
+#hint{
+  position:fixed; top:18px; left:18px; font-family:'IBM Plex Mono',monospace;
+  font-size:11px; color:var(--muted); letter-spacing:.06em; z-index:30;
+}
+@media (max-width:700px){#tools{top:8px; right:8px} #hint{display:none}}
+</style>
+
+<div id="viewport"><div id="stage">
+
+<!-- 1 ................................................................ -->
+<section class="slide" data-chap="Opening" data-title="Title">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>3D'omics · AlberdiLab · practical</div>
+    <h1>Where do gut bacteria actually live?</h1>
+    <p class="lead" style="max-width:52ch">Micro-scale spatial metagenomics: measuring the microbiome
+      of a chicken gut at a resolution of a few hundred micrometres — and testing whether
+      what we find is really structured in space.</p>
+    <div class="statrow" style="margin-top:34px; max-width:840px">
+      <div class="stat"><div class="n">336</div><div class="k">microsamples, from two cryosections</div></div>
+      <div class="stat"><div class="n">223</div><div class="k">bacterial genomes quantified in each</div></div>
+      <div class="stat"><div class="n">5,000<span style="font-size:24px"> µm²</span></div><div class="k">tissue per microsample</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ................................................................ -->
+<section class="slide" data-chap="Opening" data-title="The question">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>The question</div>
+    <blockquote class="quote">Bacteria in the gut are not randomly mixed. Do communities a few
+      hundred micrometres apart differ <em>systematically</em> — and can we say which bacteria
+      sit at each end of the gradient?</blockquote>
+    <p style="margin-top:30px; max-width:66ch">Conventional metagenomics cannot ask this. Homogenising a
+      caecum destroys every spatial relationship in it before sequencing begins. To ask
+      <em>where</em>, the sample has to stay intact and be taken apart under a microscope.</p>
+  </div>
+</section>
+
+<!-- 3 ................................................................ -->
+<section class="slide" data-chap="Opening" data-title="What a microsample is">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>The data</div>
+    <h2 class="tight">Every community profile carries a position</h2>
+    <div class="cols c2" style="margin-top:12px">
+      <div class="stack">
+        <div class="card">
+          <h3>Per microsample</h3>
+          <p>Community composition — which of the 223 genomes, and how much of each.<br>
+          <span class="mono teal">X, Y</span> position on the tissue.<br>
+          Distance to the gut wall.<br>
+          Sequencing depth and diversity.</p>
+        </div>
+        <div class="card">
+          <h3>Per genome</h3>
+          <p>Taxonomy and genome size.<br>
+          Position in the bacterial phylogeny.<br>
+          Metabolic capacity, as pathway completeness.</p>
+        </div>
+      </div>
+      <div class="stack">
+        <p>Two sides of the same dataset. Almost everything in this practical is an attempt to
+          <strong>link them</strong>: what is where, and what kind of bacterium that is.</p>
+        <div class="card good">
+          <h3>Two cryosections, one animal</h3>
+          <p><span class="mono teal">G121eI117A</span> — caecum, 168 microsamples<br>
+             <span class="mono coral">G121eO306A</span> — colon, 168 microsamples<br><br>
+             Same chicken, so region differences are not confounded with individual.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ................................................................ -->
+<section class="slide" data-chap="Opening" data-title="Study design">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Study design</div>
+    <div class="svgplate">{{DESIGN_SVG}}</div>
+  </div>
+</section>
+
+<!-- 5 ................................................................ -->
+<section class="slide" data-chap="Opening" data-title="The unusual protocol">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Step 3, and why it matters</div>
+    <h2 class="tight">MSSM does not pool libraries equimolarly</h2>
+    <div class="cols c2" style="margin-top:14px; gap:28px">
+      <div class="card">
+        <h3 style="color:var(--muted)">Standard metagenomics</h3>
+        <p>Quantify each library, pool equimolarly.<br>
+          Every sample receives roughly equal reads.<br><br>
+          <strong>Depth is a nuisance</strong> — deliberately equalised, and any residual
+          variation is something to correct for.</p>
+      </div>
+      <div class="card flag">
+        <h3 style="color:var(--amber)">MSSM</h3>
+        <p>Equal tissue area, equal PCR cycles, pooled as they come.
+          One cryosection per sequencing run.<br><br>
+          <strong>Depth is a measurement</strong> — reads track the DNA that went in, and
+          therefore the microbial biomass.</p>
+      </div>
+    </div>
+    <div class="statrow four" style="margin-top:30px">
+      <div class="stat"><div class="n sm mono">5,000 µm²</div><div class="k">identical area, every microsample</div></div>
+      <div class="stat"><div class="n sm mono">15</div><div class="k">PCR cycles, every library</div></div>
+      <div class="stat"><div class="n sm mono teal">419&times;</div><div class="k">depth spread, caecum section</div></div>
+      <div class="stat"><div class="n sm mono coral">1,366&times;</div><div class="k">depth spread, colon section</div></div>
+    </div>
+    <p class="small" style="margin-top:20px; max-width:88ch">Two caveats. Depth is a <em>share</em> of one
+      run, so it is relative within a cryosection and never comparable across them — which is why every
+      analysis stays inside one section. And it is a proxy: extraction and PCR efficiency vary, and
+      deeper sequencing detects more, so richness inherits both signals.</p>
+  </div>
+</section>
+
+<!-- 6 ................................................................ -->
+<section class="slide" data-chap="Chapter 1 · Data" data-title="The coverage filter">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 1 · from mapping output to a community table</div>
+    <h2 class="tight">Count coverage, not reads</h2>
+    <div class="cols c25" style="margin-top:8px">
+      <div class="stack">
+        <p>At face value, nearly every genome in the catalogue appears in nearly every
+          microsample — a median of <span class="mono">222 of 223</span>. That cannot be real for a
+          fragment of tissue this small.</p>
+        <p>Mapping is a heuristic: reads from a genome that <em>is</em> present also align, imperfectly,
+          to its relatives. Those stray reads scatter across the wrong genome instead of covering it
+          evenly.</p>
+        <p><strong>So ask how much of the genome was covered, not how many reads arrived.</strong>
+          Breadth of coverage is strongly bimodal, which is what makes a threshold defensible.</p>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h3>Filtering at 30&thinsp;% breadth</h3>
+          <div class="statrow" style="grid-template-columns:1fr 1fr; gap:20px; margin-top:6px">
+            <div class="stat"><div class="n sm">70&thinsp;%</div><div class="k">of non-zero entries removed</div></div>
+            <div class="stat"><div class="n sm teal">92.6&thinsp;%</div><div class="k">of reads kept</div></div>
+          </div>
+        </div>
+        <div class="card good">
+          <h3>Read that pairing again</h3>
+          <p>The filter discards most <em>cells</em> and almost no <em>reads</em>. What it removes was
+            near-empty to begin with — the rare tail that was mostly mapping noise.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 ................................................................ -->
+<section class="slide" data-chap="Chapter 1 · Data" data-title="Depth and richness">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 1 · a confound you cannot remove</div>
+    <h2 class="tight">Richness rides on sequencing depth</h2>
+    <div class="cols c52" style="margin-top:10px">
+      <div class="stack">
+        <p>Spearman <span class="mono">&rho; = 0.94</span> in the caecum, <span class="mono">0.93</span>
+          in the colon, between richness and log sequencing depth.</p>
+        <p>Two mechanisms produce that, and this dataset cannot separate them:</p>
+        <ul class="arrowlist" style="margin-top:4px">
+          <li><span class="m">bio</span><span>A microsample with more biomass genuinely holds more genomes.</span></li>
+          <li><span class="m">tech</span><span>A microsample sequenced more deeply detects more of whatever it holds.</span></li>
+        </ul>
+        <p style="margin-top:6px"><strong>Both are real. Neither can be switched off.</strong>
+          Any claim resting on richness alone is on thin ice.</p>
+      </div>
+      <div class="card flag">
+        <h3>Why this is not fatal</h3>
+        <p>Because of the pooling protocol, depth is not a nuisance to be regressed away — it is a
+          biological variable in its own right.</p>
+        <p style="margin-top:12px">The analysis in Chapter 3 does not try to remove it. It gives it an
+          axis of its own, so that the other axes can be read cleanly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ................................................................ -->
+<section class="slide" data-chap="Chapter 2 · Space" data-title="Compositionality">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 2 · testing for spatial structure</div>
+    <h2 class="tight">Two questions the raw table mixes together</h2>
+    <div class="cols c2" style="margin-top:14px">
+      <div class="card">
+        <h3 class="blue">How much was there?</h3>
+        <p>Sequencing depth. Under this protocol, a stand-in for biomass.<br><br>
+          Set aside here, deliberately — and picked up again in Chapter 3 as its own variable.</p>
+      </div>
+      <div class="card">
+        <h3 class="teal">What was it made of?</h3>
+        <p>Genuinely compositional: within a microsample only the <em>ratios</em> between genomes are
+          interpretable.<br><br>
+          Handled with a centred log-ratio transform — divide by the microsample's geometric mean,
+          then take logs.</p>
+      </div>
+    </div>
+    <p style="margin-top:26px; max-width:80ch">Note what CLR does to the total: it <strong>divides it out
+      entirely</strong>. That is the right move for asking what lives somewhere, and it is exactly why the
+      biomass signal has to be reintroduced separately later.</p>
+  </div>
+</section>
+
+<!-- 9 ................................................................ -->
+<section class="slide" data-chap="Chapter 2 · Space" data-title="Local beats regional">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 2 · first real result</div>
+    <h2 class="tight">Local variation dwarfs the difference between organs</h2>
+    <div class="cols c52" style="margin-top:10px">
+      <div class="stack">
+        <div class="card">
+          <h3>PERMANOVA · caecum vs colon</h3>
+          <div class="statrow" style="grid-template-columns:1fr 1fr; gap:20px; margin-top:6px">
+            <div class="stat"><div class="n sm">3.1&thinsp;%</div><div class="k">of variance explained by gut region</div></div>
+            <div class="stat"><div class="n sm teal mono">p = 0.001</div><div class="k">highly significant, and tiny</div></div>
+          </div>
+        </div>
+        <p style="margin-top:4px">Two different organs, and the difference between them accounts for a
+          thirtieth of the variation in the data. The other 97&thinsp;% is variation
+          <em>between neighbouring microsamples within a single section</em>.</p>
+      </div>
+      <div class="card good">
+        <h3>The case for micro-scale sampling</h3>
+        <p>Homogenise a caecum and you average away almost everything that is going on inside it.</p>
+        <p style="margin-top:12px">It also tells us where to work: inside one cryosection, where gut
+          region, animal and laboratory batch are all held constant and only position varies.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 ............................................................... -->
+<section class="slide" data-chap="Chapter 2 · Space" data-title="Within one section">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 2 · PERMANOVA inside one cryosection</div>
+    <h2 class="tight">Distance to the gut wall explains nothing</h2>
+    <div class="tablewrap" style="margin-top:6px">
+      <table>
+        <caption>Aitchison distance ~ predictor, 999 permutations</caption>
+        <thead><tr><th>Section</th><th>Predictor</th><th class="num">R²</th><th class="num">F</th><th class="num">p</th></tr></thead>
+        <tbody>
+          <tr class="dim"><td>caecum</td><td>distance to gut wall</td><td class="num">0.009</td><td class="num">1.43</td><td class="num">0.076</td></tr>
+          <tr><td>caecum</td><td>X + Y coordinates</td><td class="num">0.022</td><td class="num">1.78</td><td class="num">0.005</td></tr>
+          <tr class="hi"><td>caecum</td><td>log sequencing depth</td><td class="num">0.051</td><td class="num">8.73</td><td class="num">0.001</td></tr>
+          <tr class="dim"><td>colon</td><td>distance to gut wall</td><td class="num">0.007</td><td class="num">1.11</td><td class="num">0.277</td></tr>
+          <tr class="dim"><td>colon</td><td>X + Y coordinates</td><td class="num">0.017</td><td class="num">1.34</td><td class="num">0.096</td></tr>
+          <tr class="hi"><td>colon</td><td>log sequencing depth</td><td class="num">0.115</td><td class="num">20.3</td><td class="num">0.001</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:22px; max-width:84ch">Depth — that is, biomass — is five to eleven times more
+      explanatory than position. In an equimolar-pooled study that would be a red flag. Here it is not:
+      dense and sparse patches of gut content are genuinely different habitats.</p>
+    <p class="small" style="margin-top:-4px">But it does mean any spatial gradient has to be looked for
+      <em>underneath</em> the biomass signal.</p>
+  </div>
+</section>
+
+<!-- 11 ............................................................... -->
+<section class="slide" data-chap="Chapter 2 · Space" data-title="Moran's I">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 2 · spatial autocorrelation</div>
+    <h2 class="tight">Moran's I — a correlation coefficient for space</h2>
+    <div class="cols c52" style="margin-top:8px">
+      <div class="stack">
+        <p class="small" style="margin-bottom:6px">Microsamples are not on a grid, so "nearby" is defined
+          by a <strong>Gabriel graph</strong>: two microsamples are joined when no third lies inside the
+          circle having them as its diameter.</p>
+        <div class="tablewrap">
+          <table>
+            <caption>Caecum section G121eI117A</caption>
+            <thead><tr><th>Variable</th><th class="num">I</th><th class="num">p</th></tr></thead>
+            <tbody>
+              <tr><td>distance to gut wall</td><td class="num">0.56</td><td class="num">&lt;0.001</td></tr>
+              <tr class="hi"><td>sequencing depth</td><td class="num">0.14</td><td class="num">0.003</td></tr>
+              <tr class="dim"><td>richness</td><td class="num">0.01</td><td class="num">0.375</td></tr>
+              <tr class="dim"><td>composition (PCA axis 1)</td><td class="num">0.001</td><td class="num">0.447</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card good">
+          <h3>A result in its own right</h3>
+          <p>Sequencing depth is spatially autocorrelated. Read as biomass, that means
+            <strong>microbial biomass is patchy at the sub-millimetre scale</strong> — neighbouring pieces
+            of tissue tend to be densely or sparsely colonised together.</p>
+        </div>
+        <div class="card">
+          <h3>And a puzzle</h3>
+          <p>Richness correlates with depth at &rho;&nbsp;&gt;&nbsp;0.9, yet is spatially flat. Two
+            variables can be tightly correlated and still behave differently in space.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ............................................................... -->
+<section class="slide" data-chap="Chapter 2 · Space" data-title="Where the gradient hid">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 2 · the turning point</div>
+    <h2 class="tight">PCA ranks axes by variance, not by relevance</h2>
+    <div class="tablewrap" style="margin-top:4px">
+      <table>
+        <caption>CLR-PCA of the caecum section — what each axis actually corresponds to</caption>
+        <thead><tr><th>Axis</th><th class="num">variance</th><th class="num"><span class="lc">&rho;</span> depth</th><th class="num"><span class="lc">&rho;</span> gut-wall dist.</th><th class="num">Moran's I</th><th class="num">p</th></tr></thead>
+        <tbody>
+          <tr class="dim"><td>PC1</td><td class="num">13.4&thinsp;%</td><td class="num">&minus;0.14</td><td class="num">0.10</td><td class="num">0.001</td><td class="num">0.447</td></tr>
+          <tr><td>PC2</td><td class="num">8.2&thinsp;%</td><td class="num">0.77</td><td class="num">0.02</td><td class="num">0.184</td><td class="num">&lt;0.001</td></tr>
+          <tr class="hi"><td>PC3</td><td class="num">6.4&thinsp;%</td><td class="num">0.02</td><td class="num">0.21</td><td class="num">0.146</td><td class="num">0.002</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="arrowlist" style="margin-top:24px">
+      <li><span class="m">PC1</span><span>The biggest axis corresponds to <strong>nothing we measured</strong> — unstructured microsample-to-microsample turnover.</span></li>
+      <li><span class="m">PC2</span><span>The biomass axis. Spatially autocorrelated, as expected.</span></li>
+      <li><span class="m">PC3</span><span><strong>The gradient we came for.</strong> Third in line, smeared thinly, and reported as non-significant by every test we ran.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 13 ............................................................... -->
+<section class="slide" data-chap="Chapter 3 · RLQ" data-title="What RLQ asks">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 3 · extended RLQ</div>
+    <h2 class="tight">Ask for covariance, not variance</h2>
+    <p style="max-width:86ch; margin-bottom:22px">Stop looking for the axis with the most variance. Look for
+      the axis along which <strong>what we know about microsamples</strong> and <strong>what we know about
+      genomes</strong> covary. Neither noise nor biomass can fake that: there is no reason for a
+      microsample's DNA yield to correlate with what its bacteria can metabolise.</p>
+    <div class="tables5">
+      <div class="t5"><div class="k blue">E</div><div class="n">environment</div><div class="d">depth &asymp; biomass, richness, distance to gut wall</div></div>
+      <div class="t5"><div class="k blue">S</div><div class="n">space</div><div class="d">Gabriel neighbour graph of microsample positions</div></div>
+      <div class="t5"><div class="k" style="color:var(--ink)">L</div><div class="n">community</div><div class="d">genome counts, Hellinger-transformed</div></div>
+      <div class="t5"><div class="k teal">T</div><div class="n">traits</div><div class="d">metabolic capacity (GIFT), ordinated</div></div>
+      <div class="t5"><div class="k teal">P</div><div class="n">phylogeny</div><div class="d">patristic distances on the MAG tree</div></div>
+    </div>
+    <p class="small" style="margin-top:24px">Classical RLQ links three tables — environment, community,
+      traits. The extended version (Pavoine et al. 2011) adds space and phylogeny. Two axes carry
+      <span class="mono">86&thinsp;%</span> of the co-inertia here.</p>
+  </div>
+</section>
+
+<!-- 14 ............................................................... -->
+<section class="slide" data-chap="Chapter 3 · RLQ" data-title="What each axis is">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 3 · never interpret an axis before checking it</div>
+    <h2 class="tight">One axis is biomass. One is the gradient.</h2>
+    <div class="tablewrap" style="margin-top:4px">
+      <table>
+        <caption>Spearman <span class="lc">&rho;</span> between RLQ site scores and the variables in table E</caption>
+        <thead><tr><th>Section</th><th>Variable</th><th class="num">axis 1</th><th class="num">axis 2</th></tr></thead>
+        <tbody>
+          <tr><td>caecum</td><td>sequencing depth</td><td class="num">0.93</td><td class="num">&minus;0.30</td></tr>
+          <tr><td>caecum</td><td>richness</td><td class="num">0.95</td><td class="num">&minus;0.37</td></tr>
+          <tr class="hi"><td>caecum</td><td>distance to gut wall</td><td class="num">&minus;0.11</td><td class="num">0.48</td></tr>
+          <tr><td>colon</td><td>sequencing depth</td><td class="num">0.94</td><td class="num">0.60</td></tr>
+          <tr class="dim"><td>colon</td><td>distance to gut wall</td><td class="num">&minus;0.03</td><td class="num">0.01</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cols c2" style="margin-top:24px">
+      <div class="card">
+        <h3 class="blue">Axis 1 — biomass</h3>
+        <p>In both sections. Because pooling was unnormalised, this is a biological gradient, not an
+          artefact — and RLQ has put it on an axis of its own.</p>
+      </div>
+      <div class="card good">
+        <h3 class="teal">Caecum axis 2 — the gradient</h3>
+        <p>Tracks distance to the gut wall, and only weakly tracks depth. The colon shows nothing
+          spatial — an honest negative result.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 ............................................................... -->
+<section class="slide" data-chap="Chapter 3 · RLQ" data-title="The gradient on the tissue">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 3 · caecum section <span class="lc">G121eI117A</span></div>
+    <div class="cols c25" style="align-items:center; gap:30px">
+      <div class="figplate">{{AXES_IMG}}</div>
+      <div class="stack">
+        <h2 style="font-size:31px; margin-bottom:6px">Two spatial patterns in one piece of tissue</h2>
+        <p style="font-size:18px">Axis 2 forms a coherent band running across the section. Axis 1 is
+          patchier and locally clustered — which is what a biomass map should look like.</p>
+        <div class="tablewrap">
+          <table style="font-size:16px">
+            <caption>Moran's I on the RLQ axes</caption>
+            <thead><tr><th>Axis</th><th class="num">I</th><th class="num">p</th></tr></thead>
+            <tbody>
+              <tr><td>caecum axis 1</td><td class="num">0.097</td><td class="num">0.027</td></tr>
+              <tr class="hi"><td>caecum axis 2</td><td class="num">0.166</td><td class="num">0.0007</td></tr>
+              <tr class="dim"><td>colon axis 1</td><td class="num">0.038</td><td class="num">0.214</td></tr>
+              <tr class="dim"><td>colon axis 2</td><td class="num">0.021</td><td class="num">0.312</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small" style="margin-top:2px">Stronger than anything PCA produced — from an axis PCA
+          ranked third.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ............................................................... -->
+<section class="slide" data-chap="Chapter 3 · RLQ" data-title="The biology">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Chapter 3 · what sits at each end</div>
+    <h2 class="tight">Reading the gradient</h2>
+    <div class="tablewrap" style="margin-top:4px">
+      <table>
+        <thead><tr><th></th><th style="color:var(--blue)">Near the gut wall</th><th style="color:var(--coral)">Out in the lumen</th></tr></thead>
+        <tbody>
+          <tr><td>Axis 2 score</td><td>low</td><td>high</td></tr>
+          <tr><td>Genome size</td><td>smaller</td><td>larger &nbsp;<span class="mono muted">&rho; = 0.42</span></td></tr>
+          <tr><td>Metabolism</td><td>relatively more lipid-oriented</td><td>more polysaccharide degradation &nbsp;<span class="mono">&rho; = 0.75</span></td></tr>
+          <tr><td>Taxa</td><td>Erysipelotrichales, Lactobacillales, Coriobacteriales</td><td>Lachnospirales, UBA1381</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cols c2" style="margin-top:26px">
+      <div class="card good">
+        <h3>A coherent story</h3>
+        <p>Complex plant polysaccharides arrive in the lumen, and degrading them needs large gene
+          repertoires. Close to the epithelium the substrates are host-derived instead, and the bacteria
+          there are smaller and differently equipped.</p>
+      </div>
+      <div class="card">
+        <h3>Inherited, too</h3>
+        <p>Blomberg's <em>K</em> = <span class="mono">1.52</span>, <span class="mono">p = 0.001</span>.
+          Closely related genomes sit at the same end of the gradient more than a random walk along the
+          tree would produce — spatial preference is phylogenetically conserved.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ............................................................... -->
+<section class="slide" data-chap="Closing" data-title="Three lessons">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>What to take away</div>
+    <h2 class="tight">Three lessons</h2>
+    <div class="stack" style="gap:16px; margin-top:8px">
+      <div class="card">
+        <h3>1 · The obvious method gave the wrong answer</h3>
+        <p>PCA and PERMANOVA reported no spatial structure. The gradient was on axis 3 all along. Ranking
+          axes by size is a choice, and nothing guarantees the biggest axis is the interesting one.</p>
+      </div>
+      <div class="card">
+        <h3>2 · A protocol decision made the result findable</h3>
+        <p>Because libraries were pooled without normalisation, biomass entered the analysis as a measured
+          variable instead of hiding inside the composition. Under equimolar pooling the differences would
+          have been flattened — while the variation they cause stayed in the community table, unlabelled
+          and inseparable from the gradient.</p>
+      </div>
+      <div class="card">
+        <h3>3 · Negative results are results</h3>
+        <p>The colon section shows no gradient. One animal, one section per region, a modest R². The
+          honest version of this analysis reports all of that.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 18 ............................................................... -->
+<section class="slide" data-chap="Closing" data-title="Over to you">
+  <div class="body">
+    <div class="eyebrow"><span class="tick"></span>Now your turn</div>
+    <h2 class="tight">The exercises</h2>
+    <div class="cols c2" style="margin-top:8px; gap:26px">
+      <ul class="arrowlist">
+        <li><span class="m">1</span><span><strong>The coverage filter.</strong> Rebuild the table at 0, 0.1, 0.3 and 0.6. Does the conclusion survive?</span></li>
+        <li><span class="m">2</span><span><strong>Compositionality.</strong> Does anything of the total survive CLR? What follows for detecting a biomass gradient?</span></li>
+        <li><span class="m">3</span><span><strong>Spatial structure.</strong> Swap the Gabriel graph for k-nearest-neighbours. Should the answer change?</span></li>
+      </ul>
+      <ul class="arrowlist">
+        <li><span class="m">4</span><span><strong>RLQ.</strong> Drop distance to the gut wall from table E and re-run. If the gradient survives, it was not an artefact of telling the method what to look for.</span></li>
+        <li><span class="m">5</span><span><strong>Interpretation.</strong> Genome size and polysaccharide capacity are correlated. Separate them.</span></li>
+        <li><span class="m">6</span><span><strong>Extension.</strong> A reviewer insists on equimolar pooling. Write the reply.</span></li>
+      </ul>
+    </div>
+    <div class="card flag" style="margin-top:26px">
+      <h3>Exercise 4.1 is the one that matters</h3>
+      <p>Everything in Chapter 3 rests on RLQ having found a gradient rather than having been handed one.
+        That exercise is the test.</p>
+    </div>
+  </div>
+</section>
+
+<div id="rail">
+  <span id="railchap"></span>
+  <span id="railbar"><span id="railfill"></span></span>
+  <span id="railnum"></span>
+</div>
+</div></div>
+
+<div id="tools">
+  <button id="idxbtn" type="button" aria-label="Slide index">INDEX</button>
+  <button id="themebtn" type="button" aria-label="Toggle theme">THEME</button>
+</div>
+<div id="hint">&larr; &rarr; navigate · O index · T theme</div>
+
+<div id="index" hidden>
+  <h2>MSSM practical — slide index</h2>
+  <p class="small">Click a slide to jump. Press <span class="mono">O</span> or
+    <span class="mono">Esc</span> to close.</p>
+  <ul id="idxlist"></ul>
+</div>
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const stage  = document.getElementById('stage');
+  const fill   = document.getElementById('railfill');
+  const chapEl = document.getElementById('railchap');
+  const numEl  = document.getElementById('railnum');
+  const panel  = document.getElementById('index');
+  const list   = document.getElementById('idxlist');
+  let i = 0;
+
+  function fit(){
+    const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    chapEl.textContent = slides[i].dataset.chap;
+    numEl.textContent  = String(i + 1).padStart(2, '0') + ' / ' + slides.length;
+    fill.style.width   = ((i + 1) / slides.length * 100) + '%';
+    Array.from(list.querySelectorAll('button')).forEach((b, k) =>
+      b.classList.toggle('cur', k === i));
+    if(location.hash !== '#' + (i + 1)){
+      history.replaceState(null, '', '#' + (i + 1));
+    }
+    try{ localStorage.setItem('mssm-slide', String(i)); }catch(e){}
+  }
+
+  // index panel, grouped by chapter
+  let lastChap = null;
+  slides.forEach((s, k) => {
+    if(s.dataset.chap !== lastChap){
+      lastChap = s.dataset.chap;
+      const h = document.createElement('li');
+      h.className = 'head'; h.textContent = lastChap;
+      list.appendChild(h);
+    }
+    const li = document.createElement('li');
+    const b  = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = '<span class="i">' + String(k + 1).padStart(2, '0') +
+                  '</span><span>' + s.dataset.title + '</span>';
+    b.addEventListener('click', () => { show(k); toggleIndex(false); });
+    li.appendChild(b); list.appendChild(li);
+  });
+
+  function toggleIndex(force){
+    const open = force === undefined ? panel.hidden : force;
+    panel.hidden = !open;
+    if(open) list.querySelector('button.cur, button').focus();
+  }
+
+  function toggleTheme(){
+    const root = document.documentElement;
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const cur  = root.getAttribute('data-theme') || (dark ? 'dark' : 'light');
+    root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  }
+
+  document.getElementById('idxbtn').addEventListener('click', () => toggleIndex());
+  document.getElementById('themebtn').addEventListener('click', toggleTheme);
+
+  document.addEventListener('keydown', e => {
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key;
+    if(k === 'Escape'){ toggleIndex(false); return; }
+    if(k === 'o' || k === 'O'){ e.preventDefault(); toggleIndex(); return; }
+    if(k === 't' || k === 'T'){ toggleTheme(); return; }
+    if(!panel.hidden) return;
+    if(k === 'ArrowRight' || k === ' ' || k === 'PageDown'){ e.preventDefault(); show(i + 1); }
+    else if(k === 'ArrowLeft' || k === 'PageUp'){ e.preventDefault(); show(i - 1); }
+    else if(k === 'Home'){ show(0); }
+    else if(k === 'End'){ show(slides.length - 1); }
+  });
+
+  let start = null;
+  stage.addEventListener('touchstart', e => { start = e.changedTouches[0].clientX; },
+                         {passive:true});
+  stage.addEventListener('touchend', e => {
+    if(start === null) return;
+    const d = e.changedTouches[0].clientX - start;
+    if(Math.abs(d) > 50) show(i + (d < 0 ? 1 : -1));
+    start = null;
+  }, {passive:true});
+
+  function fromHash(){
+    const n = parseInt((location.hash || '').replace('#', ''), 10);
+    return Number.isFinite(n) && n >= 1 && n <= slides.length ? n - 1 : null;
+  }
+  window.addEventListener('hashchange', () => {
+    const n = fromHash(); if(n !== null && n !== i) show(n);
+  });
+  let start_at = fromHash();
+  if(start_at === null){
+    try{ start_at = parseInt(localStorage.getItem('mssm-slide') || '0', 10) || 0; }
+    catch(e){ start_at = 0; }
+  }
+  show(start_at);
+})();
+</script>

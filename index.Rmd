@@ -1,0 +1,265 @@
+---
+title: "Micro-scale spatial metagenomics | Practical"
+author: "AlberdiLab · 3D'omics"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+url: "https://github.com/3d-omics/MSSM-practical"
+description: |
+  A teaching version of the micro-scale spatial metagenomics analysis:
+  the minimum set of steps needed to understand how spatial structure in a
+  gut microbiome is measured and tested.
+link-citations: true
+---
+
+```{r knitr_opts, echo = FALSE}
+knitr::opts_chunk$set(
+  class.source = "script-source",
+  class.output = "script-output",
+  comment = NA,
+  fig.align = "center"
+)
+```
+
+# Introduction
+
+Conventional metagenomics grinds up a whole gut sample and asks *which bacteria
+live in this animal*. It cannot ask **where** they live, because the moment the
+sample is homogenised all spatial information is gone.
+
+**Micro-scale spatial metagenomics (MSSM)** keeps that information. A frozen
+section of intestinal tissue is photographed, and a laser cuts out hundreds of
+tiny pieces — *microsamples* — each only a few hundred micrometres across. Each
+microsample is sequenced separately, and because the laser recorded where it
+cut, every community profile comes with an **X/Y coordinate on the tissue**.
+
+The data therefore has a shape that ordinary microbiome data does not:
+
+```
+  microsample  ──  community composition   (which genomes, how much of each)
+       │
+       ├─────────  position in the tissue  (X, Y, distance to the gut wall)
+       └─────────  sequencing metrics      (depth, diversity)
+
+  genome       ──  taxonomy, genome size, phylogeny, metabolic capacity
+```
+
+This practical works through the analysis that data structure makes possible,
+using real data from one chicken caecum and one chicken colon.
+
+## Study design
+
+```{r design_figure, echo = FALSE, out.width = "100%", fig.cap = "How MSSM data is produced, from tissue to the five tables that enter the analysis."}
+knitr::include_graphics("resources/images/study_design.svg")
+```
+
+Steps 1, 2 and 4 are what you would expect. **Step 3 is not**, and the next
+section explains why it matters more than it looks.
+
+## The question
+
+> Bacteria in the gut are not randomly mixed. Communities a few hundred
+> micrometres apart differ, and they differ *systematically* — along gradients
+> that run from the gut wall out into the lumen. Can we detect such a gradient,
+> and can we say which kind of bacteria sit at each end of it?
+
+Answering it takes four steps, one per chapter:
+
+| Chapter | Question | Method |
+|---|---|---|
+| \@ref(data) | What does a microsample community actually look like? | Coverage filtering, genome counts, Hill numbers |
+| \@ref(space) | Is there *any* spatial structure, or is it noise? | Tissue maps, CLR + PCA, PERMANOVA, Moran's I |
+| \@ref(rlq) | What explains the structure? | Extended RLQ (space + environment + traits + phylogeny) |
+| \@ref(exercises) | Does it hold up? | Exercises: null models, replication, parameter choices |
+
+## The data
+
+Everything you need is in this repository — nothing to download.
+
+| Object | What it is |
+|---|---|
+| `sample_metadata` | 336 microsamples: coordinates, distance to gut wall, sequencing depth |
+| `genome_read_counts` | Reads mapped to each of 223 genomes in each microsample |
+| `genome_covered_bases` | How much of each genome those reads actually covered |
+| `genome_metadata` | Taxonomy, genome length, completeness of each genome |
+| `genome_tree` | Phylogeny of the 223 genomes |
+| `genome_gifts` | Metabolic capacity of each genome (GIFT scores) |
+
+The 223 genomes are metagenome-assembled genomes (MAGs) built beforehand from
+conventional, macro-scale sequencing of the same animals. Microsample reads are
+mapped against that catalogue — a microsample on its own has far too little DNA
+to assemble anything.
+
+Two cryosections are included, chosen so you can compare gut regions:
+
+| Cryosection | Region | Microsamples |
+|---|---|---|
+| `G121eI117A` | Caecum | 168 |
+| `G121eO306A` | Colon | 168 |
+
+Both come from the same animal (G121), so differences between them are about
+gut region and not about which chicken they came from.
+
+### A deliberately unnormalised protocol
+
+One design decision shapes every analysis in this book, and it is worth
+understanding before you touch the data.
+
+In conventional metagenomics, each library is quantified after preparation and
+pooled **equimolarly**, so that every sample receives roughly the same number of
+reads. Sequencing depth is then a technical nuisance, deliberately equalised,
+and any residual variation in it is something to correct for.
+
+MSSM does the opposite:
+
+- every microsample is cut to the **same area**, so the same amount of tissue
+  enters each library;
+- every library gets the **same number of PCR cycles**, so amplification does
+  not rescale anything;
+- libraries are pooled **without normalisation**;
+- all libraries from one cryosection are sequenced in a **single run**.
+
+The consequence is that the reads a microsample receives are roughly
+proportional to the DNA that went into it — and therefore to the **microbial
+biomass it contained**. Depth stops being a nuisance and becomes a
+quasi-quantitative measurement that equimolar pooling would have destroyed.
+
+Two caveats come with it, and both matter later:
+
+1. **It is relative, not absolute.** One run is shared out among the
+   microsamples of one cryosection, so a microsample's depth is its *share* of
+   that cryosection's total biomass. The composition closes at the cryosection
+   level, and depths are not comparable between cryosections or runs. This is
+   why every analysis in Chapters \@ref(space) and \@ref(rlq) is done within a
+   single section.
+2. **It is a proxy, not a calibrated measurement.** Extraction efficiency,
+   library quality and PCR stochasticity vary too. And because deeper
+   sequencing detects more genomes, anything computed from depth — richness
+   above all — inherits both the biological signal and the detection effect.
+
+::: {.rmdnote}
+**Read this as an unusual choice, not an oversight.** For most metagenomics,
+unnormalised pooling would be a mistake: it wastes reads on samples that do not
+need them and starves those that do. For MSSM it is the point. Biomass varies
+enormously between neighbouring pieces of tissue, that variation is part of the
+spatial biology being studied, and equimolar pooling would erase it.
+:::
+
+::: {.rmdnote}
+**This is a simplified version.** The published study also validated the method
+against FISH microscopy and conventional metagenomics, compared genome
+catalogues, quantified contamination, and analysed strain-level variation. None
+of that is here. The full analysis lives at
+[github.com/3d-omics/MSSM](https://github.com/3d-omics/MSSM).
+:::
+
+## Setting up
+
+### Packages
+
+```{r load_libraries, warning = FALSE, message = FALSE}
+if (!require("pacman")) install.packages("pacman")
+
+# CRAN
+pacman::p_load(
+  tidyverse,      # data manipulation and plotting
+  ape,            # phylogenetic trees
+  phytools,       # tree utilities
+  vegan,          # ecology: ordination, PERMANOVA, transformations
+  zCompositions,  # zero replacement for compositional data
+  ade4,           # the ordinations that RLQ is built from
+  adespatial,     # spatial ecology
+  adegraphics,    # required by ade4 for plotting
+  spdep,          # neighbour graphs and Moran's I
+  patchwork,      # combining plots
+  ggrepel,        # non-overlapping labels
+  magick          # reading the cryosection photographs
+)
+
+# Bioconductor: phylogeny plotting
+# BiocManager::install("ggtree")
+pacman::p_load(ggtree)
+
+# GitHub: Hill-number diversity and metabolic capacity annotation
+pacman::p_load_gh("anttonalberdi/hilldiv2", "anttonalberdi/distillR")
+
+select <- dplyr::select
+```
+
+### Colours and theme
+
+One palette for bacterial orders, used consistently everywhere, so a colour
+means the same thing in every figure of this book.
+
+```{r plotting_settings, warning = FALSE, message = FALSE}
+phylum_colors <- c(
+  Actinomycetota    = "#346254",
+  Bacillota         = "#4a6ab7",
+  Bacillota_A       = "#8c1c47",
+  Bacteroidota      = "#9c8464",
+  Pseudomonadota    = "#c49d4b",
+  Verrucomicrobiota = "#462410"
+)
+
+order_colors <- c(
+  Actinomycetales      = "#79b1a3",
+  Coriobacteriales     = "#498a77",
+  CAJFEE01             = "#a0c5e8",
+  Erysipelotrichales   = "#7acef4",
+  Lactobacillales      = "#6390fb",
+  ML615J_28            = "#70c9de",
+  Paenibacillales      = "#70a8dc",
+  RF39                 = "#5c7fba",
+  Christensenellales   = "#f58262",
+  Clostridiales        = "#cf4a82",
+  Lachnospirales       = "#e15f7d",
+  Monoglobales         = "#e18299",
+  Oscillospirales      = "#ba2760",
+  Peptostreptococcales = "#e35d51",
+  TANB77               = "#ef3d26",
+  UBA1381              = "#be5643",
+  Bacteroidales        = "#e3c7a0",
+  Enterobacterales     = "#ffcc62",
+  Verrucomicrobiales   = "#823f1d",
+  Mycobacteriales      = "#79b1b6",
+  Propionibacteriales  = "darkseagreen3",
+  Azospirillales       = "lightyellow",
+  Eubacteriales        = "maroon"
+)
+
+region_colors <- c(Caecum = "#2A9D8F", Colon = "#E76F51")
+
+mssm_theme <- theme_classic(base_size = 12) +
+  theme(
+    plot.title   = element_text(size = 12, face = "bold"),
+    legend.title = element_text(size = 10),
+    legend.text  = element_text(size = 9),
+    strip.background = element_rect(fill = "#dde3e9", colour = "white")
+  )
+
+theme_set(mssm_theme)
+```
+
+### Helper functions
+
+The steps that would otherwise be twenty lines of bookkeeping are wrapped in
+functions. Open
+[`resources/scripts/practical_functions.R`](resources/scripts/practical_functions.R)
+whenever you want to see what one of them really does — each has a comment
+explaining the reasoning, not just the mechanics.
+
+```{r load_functions, warning = FALSE, message = FALSE}
+source("resources/scripts/rlqESLTP.R")           # extended RLQ (Pavoine et al. 2011)
+source("resources/scripts/practical_functions.R") # everything else
+```
+
+### Loading the data
+
+```{r load_data, warning = FALSE, message = FALSE}
+load("resources/data/mssm_practical_data.Rdata")
+
+pixel_coords <- read_csv("resources/images/microsample_pixel_coords.csv",
+                         show_col_types = FALSE)
+
+ls()
+```

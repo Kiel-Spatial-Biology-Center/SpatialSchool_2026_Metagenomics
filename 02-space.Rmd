@@ -1,0 +1,348 @@
+# Is the community spatially structured? {#space}
+
+Chapter \@ref(data) produced a community table. This chapter asks the question
+that makes the data worth collecting: **do nearby microsamples host more similar
+communities than distant ones?**
+
+We will attack it with the standard microbial ecology toolkit — ordination,
+PERMANOVA, spatial autocorrelation — and that toolkit will mostly **fail**.
+Understanding *why* it fails is the point of this chapter, and the reason
+Chapter \@ref(rlq) needs a different method.
+
+```{r ch2_setup, echo = FALSE, warning = FALSE, message = FALSE}
+# rebuild chapter 1's outputs so this chapter can be run on its own
+genome_coverage  <- breadth_of_coverage(genome_covered_bases, genome_metadata)
+read_counts_filt <- filter_by_coverage(genome_read_counts, genome_coverage, 0.3)
+genome_counts    <- to_genome_counts(read_counts_filt, genome_metadata)
+sample_metadata  <- sample_metadata %>%
+  select(-any_of(c("richness", "neutral", "phylogenetic"))) %>%
+  left_join(alpha_diversity(genome_counts, genome_tree), by = "microsample")
+set.seed(2024)
+```
+
+## Putting the microsamples back on the tissue
+
+The most direct thing to do with spatial data is look at it. Every microsample
+has a pixel position on the photograph of its cryosection, so any
+per-microsample number can be painted onto the tissue.
+
+```{r map_richness, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 10}
+plot_on_section("G121eI117A", sample_metadata, "richness",
+                "Richness", pixel_coords, diverging = FALSE) +
+plot_on_section("G121eO306A", sample_metadata, "richness",
+                "Richness", pixel_coords, diverging = FALSE)
+```
+
+And the variable we ultimately care about — how far each microsample sits from
+the epithelium, the living gut wall:
+
+```{r map_host_distance, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 10}
+plot_on_section("G121eI117A", sample_metadata, "distance_host",
+                "Distance to\ngut wall (µm)", pixel_coords, diverging = FALSE) +
+plot_on_section("G121eO306A", sample_metadata, "distance_host",
+                "Distance to\ngut wall (µm)", pixel_coords, diverging = FALSE)
+```
+
+Distance to the wall varies smoothly across the section — it is a genuine
+spatial gradient, by construction. Richness looks patchier. Whether those
+patches mean anything is what the rest of the chapter tests.
+
+## Compositional data and the CLR transformation
+
+We now have to separate two questions that the raw table mixes together: *how
+much* was in a microsample, and *what it was made of*.
+
+The first is sequencing depth, which under this protocol carries biomass
+information (Chapter \@ref(data)). We set it aside deliberately here and pick it
+up again as its own variable.
+
+The second is composition, and it is genuinely compositional: within a
+microsample, only the ratios between genomes are interpretable. Euclidean
+distances on raw proportions are misleading, and the standard fix is the
+**centred log-ratio (CLR)** — divide every value by the geometric mean of its
+microsample, then take logs. Note what CLR does to the total: it divides it out
+entirely. That is the right move for asking *what lives here*, and it is exactly
+why the biomass signal has to be reintroduced separately later.
+
+Logs need positive numbers, so zeros are replaced first, using a Bayesian
+estimator that respects the compositional structure.
+
+```{r clr, warning = FALSE, message = FALSE}
+comm_all <- genome_counts %>%
+  column_to_rownames("genome") %>%
+  t() %>%
+  as.data.frame()
+comm_all <- comm_all[rowSums(comm_all) > 0, colSums(comm_all) > 0, drop = FALSE]
+
+# zeros -> small positive values; genomes too sparse to estimate are dropped
+comm_repl <- cmultRepl(comm_all, method = "GBM", output = "prop",
+                       z.warning = 0.95)
+
+clr <- function(x) log(x) - rowMeans(log(x))
+comm_clr <- clr(as.matrix(comm_repl))
+
+dim(comm_clr)  # microsamples x genomes retained
+```
+
+Note how much shrank: from 223 genomes to under a hundred. Everything else was
+too sparse across these two cryosections to place on a log scale at all.
+
+```{r pca, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 7}
+pca <- prcomp(comm_clr, center = TRUE, scale. = FALSE)
+var_pct <- round(100 * pca$sdev^2 / sum(pca$sdev^2), 1)
+
+pca_scores <- as.data.frame(pca$x[, 1:2]) %>%
+  rownames_to_column("microsample") %>%
+  left_join(sample_metadata, by = "microsample")
+
+ggplot(pca_scores, aes(PC1, PC2, colour = region)) +
+  geom_point(size = 2, alpha = 0.85) +
+  stat_ellipse(linewidth = 0.5) +
+  scale_colour_manual(values = region_colors) +
+  labs(x = paste0("PC1 (", var_pct[1], "%)"),
+       y = paste0("PC2 (", var_pct[2], "%)"),
+       colour = "Region")
+```
+
+The two organs overlap heavily. Let us quantify that with PERMANOVA, which asks
+whether a variable explains more between-sample distance than label shuffling
+would produce by chance.
+
+```{r permanova_region, warning = FALSE, message = FALSE}
+dist_clr <- dist(comm_clr, method = "euclidean")   # Aitchison distance
+
+meta_ord <- sample_metadata %>%
+  filter(microsample %in% rownames(comm_clr)) %>%
+  arrange(match(microsample, rownames(comm_clr)))
+
+adonis2(dist_clr ~ region, data = meta_ord, permutations = 999)
+```
+
+Caecum and colon differ significantly — but **R² is only about 3%**. Two
+different organs, and the difference between them accounts for a thirtieth of
+the variation in the data.
+
+::: {.rmdnote}
+**First real result.** At this scale, variation *between neighbouring
+microsamples within one section* dwarfs the variation *between gut regions*.
+That is the whole justification for micro-scale sampling: homogenise a caecum
+and you average away 97% of what is actually going on.
+:::
+
+## Working within a single cryosection
+
+If local variation is where the signal is, the analysis belongs inside one
+cryosection, where gut region, animal, and laboratory batch are all held
+constant and the only thing that varies is position.
+
+`prepare_section()` does that: it pulls out one section, drops empty
+microsamples, and replaces zeros within that section alone.
+
+```{r sections, warning = FALSE, message = FALSE}
+caecum <- prepare_section("G121eI117A", genome_counts, sample_metadata)
+colon  <- prepare_section("G121eO306A", genome_counts, sample_metadata)
+
+tibble(
+  section     = c(caecum$section, colon$section),
+  microsamples = c(nrow(caecum$comm_red), nrow(colon$comm_red)),
+  genomes      = c(ncol(caecum$comm_red), ncol(colon$comm_red))
+)
+```
+
+Now the key test. Does distance to the gut wall explain community composition
+inside a single 2 mm section?
+
+```{r permanova_within, warning = FALSE, message = FALSE}
+caecum_clr  <- clr(as.matrix(caecum$comm_zero_repl))
+caecum_dist <- dist(caecum_clr)
+caecum_meta <- caecum$metadata
+
+adonis2(caecum_dist ~ distance_host, data = caecum_meta, permutations = 999)
+```
+
+**Not significant.** Now compare that with the coordinates themselves, and with
+sequencing depth — in both sections:
+
+```{r permanova_compare, warning = FALSE, message = FALSE}
+colon_clr  <- clr(as.matrix(colon$comm_zero_repl))
+colon_dist <- dist(colon_clr)
+colon_meta <- colon$metadata
+
+permanova_row <- function(dist_matrix, meta, rhs, label, section) {
+  a <- adonis2(as.formula(paste("dist_matrix ~", rhs)),
+               data = meta, permutations = 999)
+  tibble(section = section, term = label,
+         R2 = round(a$R2[1], 4), F = round(a$F[1], 2), p = a$`Pr(>F)`[1])
+}
+
+terms <- list(
+  c("distance_host",                    "distance to gut wall"),
+  c("Xcoord + Ycoord",                  "X + Y coordinates"),
+  c("log(after_filtering.total_bases)", "log(sequencing depth)")
+)
+
+bind_rows(
+  map_dfr(terms, ~ permanova_row(caecum_dist, caecum_meta, .x[1], .x[2], "caecum")),
+  map_dfr(terms, ~ permanova_row(colon_dist,  colon_meta,  .x[1], .x[2], "colon"))
+)
+```
+
+::: {.rmdnote}
+**Permutation p-values wobble.** PERMANOVA estimates significance by shuffling,
+so re-running the same test gives slightly different p-values (0.08 rather than
+0.09, say). Read them as approximate, and never as a hard threshold.
+:::
+
+Sequencing depth is by far the strongest predictor of community composition, in
+both sections — five to eleven times more explanatory than distance to the gut
+wall.
+
+In an equimolar-pooled study this would be a red flag: a technical variable
+driving composition means something went wrong. Here it is not. Depth stands in
+for biomass, and it is entirely reasonable that microsamples holding more
+bacteria hold a *different* community from microsamples holding very few. Dense
+and sparse patches of gut content are different habitats.
+
+What the result does mean is that biomass, not position, is the leading axis of
+compositional variation inside a cryosection. Any spatial gradient we hope to
+find has to be looked for underneath it.
+
+## Spatial autocorrelation
+
+To measure spatial structure directly we need a definition of "nearby".
+Microsamples are not on a regular grid — the laser cuts where the tissue allows
+— so rather than pick a distance cutoff we build a **Gabriel graph**: two
+microsamples are joined when no third one lies inside the circle having them as
+its diameter.
+
+```{r neighbours, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 6}
+caecum_nb <- neighbour_graph(caecum_meta[, c("Xcoord", "Ycoord")])
+caecum_nb
+
+plot_neighbour_graph(caecum_meta[, c("Xcoord", "Ycoord")], caecum_nb,
+                     point_values = caecum_meta$richness,
+                     value_label = "Richness") +
+  labs(title = "Gabriel neighbour graph, caecum section G121eI117A")
+```
+
+**Moran's I** is a correlation coefficient for space: it compares each
+microsample's value with its neighbours'.
+
+- **I > 0** — neighbours resemble each other (spatial structure)
+- **I ≈ 0** — values arranged at random
+- **I < 0** — neighbours systematically *unlike* each other
+
+Computing it at increasing lag orders — direct neighbours, then
+neighbours-of-neighbours, and so on — shows how far the resemblance reaches.
+
+```{r correlogram, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 9}
+correlograms <- bind_rows(
+  moran_correlogram(caecum_nb, log(caecum_meta$distance_host)) %>%
+    mutate(variable = "log(distance to gut wall)"),
+  moran_correlogram(caecum_nb, log(caecum_meta$after_filtering.total_bases)) %>%
+    mutate(variable = "log(sequencing depth)"),
+  moran_correlogram(caecum_nb, log(caecum_meta$richness)) %>%
+    mutate(variable = "log(richness)"),
+  moran_correlogram(caecum_nb, prcomp(caecum_clr)$x[, 1]) %>%
+    mutate(variable = "composition (CLR-PCA axis 1)")
+) %>%
+  mutate(variable = fct_inorder(variable))
+
+ggplot(correlograms, aes(x = lag, y = morans_i)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "#4a6ab7", alpha = 0.2) +
+  geom_line(colour = "#4a6ab7") +
+  geom_point(colour = "#4a6ab7", size = 1.8) +
+  facet_wrap(~ variable, nrow = 1) +
+  scale_x_continuous(breaks = seq(2, 8, 2)) +
+  labs(x = "Lag order (steps through the neighbour graph)", y = "Moran's I")
+```
+
+Read the four panels in order:
+
+1. **Distance to the gut wall** is strongly autocorrelated at short lags and
+   turns negative at long ones — the signature of a gradient. This is
+   guaranteed: it is a smooth function of position.
+2. **Sequencing depth** is also autocorrelated, weakly but clearly (I = 0.14,
+   p = 0.003). Read as biomass, this is a result in its own right: **microbial
+   biomass is spatially patchy at the sub-millimetre scale.** Neighbouring
+   pieces of tissue tend to be densely or sparsely colonised together.
+3. **Richness** is essentially flat — despite correlating with depth at ρ > 0.9.
+   Worth pausing on: two variables can be tightly correlated and still differ in
+   spatial behaviour.
+4. **Composition**, summarised as the first CLR-PCA axis, is **also flat**.
+
+```{r moran_tests, warning = FALSE, message = FALSE}
+lw <- nb2listw(caecum_nb)
+
+map_dfr(
+  list(
+    "log(distance to gut wall)" = log(caecum_meta$distance_host),
+    "log(sequencing depth)"     = log(caecum_meta$after_filtering.total_bases),
+    "log(richness)"             = log(caecum_meta$richness),
+    "composition (PCA axis 1)"  = prcomp(caecum_clr)$x[, 1]
+  ),
+  function(v) {
+    tst <- moran.test(v, lw, zero.policy = TRUE)
+    tibble(morans_i = round(unname(tst$estimate[1]), 3),
+           p_value  = signif(tst$p.value, 3))
+  },
+  .id = "variable"
+)
+```
+
+## Why the obvious approach failed
+
+By the standard toolkit, this dataset has **no spatial structure in community
+composition**. But that conclusion rests entirely on one choice we never
+examined: using PCA axis 1 as the summary of "what lives here".
+
+PCA ranks its axes by **variance**, not by relevance. Nothing guarantees that
+the largest axis is the interesting one. Look at what the first three axes
+actually correspond to:
+
+```{r pca_axes_meaning, warning = FALSE, message = FALSE}
+caecum_pca <- prcomp(caecum_clr)
+caecum_var <- round(100 * caecum_pca$sdev^2 / sum(caecum_pca$sdev^2), 1)
+
+map_dfr(1:3, function(k) {
+  ax  <- caecum_pca$x[, k]
+  tst <- moran.test(ax, lw, zero.policy = TRUE)
+  tibble(
+    axis            = paste0("PC", k),
+    variance_pct    = caecum_var[k],
+    rho_depth       = round(cor(ax, log(caecum_meta$after_filtering.total_bases),
+                                method = "spearman"), 2),
+    rho_host_dist   = round(cor(ax, log(caecum_meta$distance_host),
+                                method = "spearman"), 2),
+    morans_i        = round(unname(tst$estimate[1]), 3),
+    moran_p         = signif(tst$p.value, 3)
+  )
+})
+```
+
+Read that table carefully — it is the turning point of the practical.
+
+- **PC1** is the biggest axis (13% of variance) and corresponds to **nothing we
+  measured**: not depth, not position, and it is not spatially autocorrelated.
+  It is unstructured microsample-to-microsample turnover — the stochastic part
+  of who happens to be where.
+- **PC2** is the biomass axis (ρ ≈ 0.8 with depth) and *is* spatially
+  autocorrelated, consistent with the patchiness we saw above.
+- **PC3** carries the weak trace of distance to the gut wall (ρ ≈ 0.2) and is
+  also significantly autocorrelated.
+
+**The gradient we came for is on axis 3.** It was never going to be found by
+looking at axis 1, and it is smeared thinly across several axes rather than
+isolated on any of them — because nothing in PCA's objective function has any
+reason to isolate it.
+
+::: {.rmdnote}
+**What we need instead** is a method that does not rank axes by size, but looks
+for the axis that is simultaneously **organised in space** and **associated with
+the kind of bacteria involved** — their metabolism and their evolutionary
+history. Sequencing noise cannot fake that combination: there is no reason for a
+microsample's biomass to correlate with what its bacteria can metabolise. That
+is exactly what extended RLQ does, and it is the subject of
+Chapter \@ref(rlq).
+:::

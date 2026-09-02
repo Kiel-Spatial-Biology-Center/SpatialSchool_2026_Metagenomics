@@ -1,0 +1,343 @@
+# Extended RLQ: finding the gradient {#rlq}
+
+Chapter \@ref(space) ended in a dead end. Ordinary ordination found no spatial
+structure in composition, because it ranks axes by size and the gradient we
+wanted turned out to be axis 3 — smeared thinly, below a biomass axis and below
+a large axis of unstructured turnover.
+
+The fix is to stop asking for the axis with the **most variance** and start
+asking for the axis with the **most covariance between two sides of the data**:
+
+- what we know about each *microsample* — where it is, how deep it was
+  sequenced, how diverse it is;
+- what we know about each *genome* — its metabolic capacity and its position in
+  the bacterial phylogeny.
+
+An axis that scores highly on both is one where *position in the tissue* and
+*kind of bacterium* line up. That is precisely what a spatial gradient is, and
+neither noise nor biomass can fake it: there is no reason for a microsample's
+DNA yield to correlate with what its bacteria can metabolise.
+
+```{r ch3_setup, echo = FALSE, warning = FALSE, message = FALSE}
+genome_coverage  <- breadth_of_coverage(genome_covered_bases, genome_metadata)
+read_counts_filt <- filter_by_coverage(genome_read_counts, genome_coverage, 0.3)
+genome_counts    <- to_genome_counts(read_counts_filt, genome_metadata)
+sample_metadata  <- sample_metadata %>%
+  select(-any_of(c("richness", "neutral", "phylogenetic"))) %>%
+  left_join(alpha_diversity(genome_counts, genome_tree), by = "microsample")
+caecum <- prepare_section("G121eI117A", genome_counts, sample_metadata)
+colon  <- prepare_section("G121eO306A", genome_counts, sample_metadata)
+set.seed(2024)
+```
+
+## The five tables
+
+Classical **RLQ** analysis links three tables: environmental variables of the
+sites (**R**), the community table (**L**), and species traits (**Q**). It finds
+the axes along which R and Q covary *through* L.
+
+**Extended RLQ** (Pavoine et al. 2011) adds two more: the spatial arrangement of
+the sites (**S**) and the phylogeny of the species (**P**). Five tables, hence
+*ESLTP*.
+
+| Table | In this dataset | Rows |
+|---|---|---|
+| **E** environment | sequencing depth (≈ biomass), richness, distance to gut wall | microsamples |
+| **S** space | Gabriel-graph neighbourhood structure | microsamples |
+| **L** community | Hellinger-transformed genome abundances | microsamples × genomes |
+| **T** traits | metabolic capacity (GIFT), ordinated | genomes |
+| **P** phylogeny | patristic distances on the MAG tree | genomes |
+
+### Traits: what can each genome do?
+
+Genome traits come from **GIFTs** (genome-inferred functional traits): for each
+genome, the completeness of every metabolic pathway it encodes, from its
+annotated genes. Nearly 300 traits per genome is too many to feed to RLQ
+directly, so we ordinate them first and keep the two main axes of metabolic
+variation.
+
+```{r trait_pcoa, warning = FALSE, message = FALSE}
+# genomes that survived filtering in either section
+genomes_used <- union(colnames(caecum$comm_red), colnames(colon$comm_red))
+
+gifts_used <- genome_gifts[rownames(genome_gifts) %in% genomes_used,
+                           !grepl("^S0|^D04", colnames(genome_gifts)),
+                           drop = FALSE]
+
+dim(gifts_used)   # genomes x metabolic traits
+
+trait_pcoa <- ape::pcoa(dist(gifts_used))
+round(trait_pcoa$values$Relative_eig[1:5], 3)
+```
+
+A shared trait ordination is used for both sections, so that an axis means the
+same thing in the caecum and in the colon.
+
+```{r trait_space, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 7}
+as.data.frame(trait_pcoa$vectors[, 1:2]) %>%
+  rownames_to_column("genome") %>%
+  left_join(genome_metadata, by = "genome") %>%
+  ggplot(aes(Axis.1, Axis.2, colour = order, size = length / 1e6)) +
+  geom_point(alpha = 0.9) +
+  scale_colour_manual(values = order_colors) +
+  scale_size_continuous(range = c(0.8, 5), name = "Genome size (Mb)") +
+  guides(colour = guide_legend(override.aes = list(size = 3))) +
+  labs(x = "Metabolic PCoA 1", y = "Metabolic PCoA 2",
+       title = "Metabolic trait space of the genomes")
+```
+
+Bacterial orders occupy distinct parts of trait space, and genome size varies
+across it — related bacteria have similar metabolic repertoires. This is why the
+phylogeny table **P** is worth including separately: it captures the part of
+"what kind of bacterium" that the trait table misses.
+
+## Running the analysis
+
+```{r run_rlq, warning = FALSE, message = FALSE}
+rlq_caecum <- spatial_rlq("G121eI117A", caecum$comm_red, caecum$metadata,
+                          trait_pcoa, genome_tree)
+rlq_colon  <- spatial_rlq("G121eO306A", colon$comm_red, colon$metadata,
+                          trait_pcoa, genome_tree)
+
+round(rlq_caecum$eig_prop[1:4], 3)   # share of co-inertia per axis
+```
+
+Two axes carry almost everything. Their *sign* is arbitrary — flipping an axis
+changes nothing but which end is drawn red — so we fix a convention that makes
+the caecum figures read left to right:
+
+```{r flip, warning = FALSE, message = FALSE}
+rlq_caecum <- flip_rlq_axes(rlq_caecum, axes = c(1, 2))
+
+caecum_sites   <- rlq_site_scores(rlq_caecum, caecum$metadata)
+caecum_genomes <- rlq_genome_scores(rlq_caecum, genome_metadata)
+
+colon_sites    <- rlq_site_scores(rlq_colon, colon$metadata)
+colon_genomes  <- rlq_genome_scores(rlq_colon, genome_metadata)
+
+head(caecum_sites %>% select(microsample, axis1, axis2, distance_host))
+```
+
+Every microsample now has two coordinates in RLQ space, and so does every
+genome. That is the whole point of the method: microsamples and genomes are
+placed on the *same* axes.
+
+## What is each axis?
+
+Never interpret an RLQ axis before checking what drives it. Correlate both axes
+against every microsample variable that went into **E**:
+
+```{r axis_identity, warning = FALSE, message = FALSE}
+axis_correlations <- function(sites, label) {
+  vars <- list(
+    "distance to gut wall"  = log(sites$distance_host),
+    "sequencing depth"      = log(sites$after_filtering.total_bases),
+    "richness"              = sites$richness
+  )
+  map_dfr(names(vars), function(v) {
+    tibble(section = label, variable = v,
+           axis1 = round(cor(sites$axis1, vars[[v]], method = "spearman"), 2),
+           axis2 = round(cor(sites$axis2, vars[[v]], method = "spearman"), 2))
+  })
+}
+
+bind_rows(axis_correlations(caecum_sites, "caecum"),
+          axis_correlations(colon_sites,  "colon"))
+```
+
+This table is the crux of the whole practical.
+
+- **Axis 1** is sequencing depth and richness, in both sections (|ρ| ≈ 0.9). It
+  is the **biomass axis**. Because libraries were pooled without normalisation
+  (see the introduction), depth stands in for how much microbial biomass a
+  microsample held, and axis 1 says that this is the dominant organising
+  gradient of MSSM data. RLQ has separated it onto an axis of its own, which is
+  what lets axis 2 be read cleanly.
+- **Caecum axis 2** correlates with **distance to the gut wall** (ρ ≈ 0.5) and
+  much more weakly with depth. This is the biological gradient.
+- **Colon axis 2** is flat against distance to the gut wall (ρ ≈ 0.01) and
+  still partly tracks depth and richness. This section has no detectable spatial
+  gradient — an honest negative result, and a reminder that not every
+  cryosection has one.
+
+Is caecum axis 2 spatially autocorrelated, where PC1 was not?
+
+```{r axis_moran, warning = FALSE, message = FALSE}
+map_dfr(
+  list(
+    "caecum axis 1" = list(rlq_caecum, caecum_sites$axis1),
+    "caecum axis 2" = list(rlq_caecum, caecum_sites$axis2),
+    "colon axis 1"  = list(rlq_colon,  colon_sites$axis1),
+    "colon axis 2"  = list(rlq_colon,  colon_sites$axis2)
+  ),
+  function(x) {
+    tst <- moran.test(x[[2]], nb2listw(x[[1]]$nb), zero.policy = TRUE)
+    tibble(morans_i = round(unname(tst$estimate[1]), 3),
+           p_value  = signif(tst$p.value, 3))
+  },
+  .id = "axis"
+)
+```
+
+Caecum axis 2 is significantly autocorrelated in space, and more strongly than
+anything PCA produced. The signal was there all along, in a *minor* axis of
+compositional variation — minor in size, but the only one organised both
+spatially and functionally.
+
+Note also that axis 1, the biomass axis, is itself weakly autocorrelated
+(I = 0.10, p = 0.03), matching the patchiness of sequencing depth from
+Chapter \@ref(space). Biomass and community type are two different spatial
+patterns living in the same tissue, and RLQ has put them on separate axes.
+
+## The gradient on the tissue
+
+```{r map_axes, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 10}
+plot_on_section("G121eI117A", caecum_sites, "axis2", "Caecum\naxis 2",
+                pixel_coords) +
+plot_on_section("G121eI117A", caecum_sites, "axis1", "Caecum\naxis 1",
+                pixel_coords)
+```
+
+Axis 2 (left) forms a coherent band running across the tissue — the gradient,
+made visible. Axis 1 (right) is patchier and more locally clustered, which is
+what a biomass map should look like: dense and sparse pockets rather than a
+smooth trend.
+
+```{r axis_scatter, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 9}
+caecum_sites %>%
+  select(axis1, axis2, distance_host, after_filtering.total_bases) %>%
+  pivot_longer(c(axis1, axis2), names_to = "axis", values_to = "score") %>%
+  pivot_longer(c(distance_host, after_filtering.total_bases),
+               names_to = "variable", values_to = "value") %>%
+  mutate(variable = recode(variable,
+                           distance_host = "Distance to gut wall (µm)",
+                           after_filtering.total_bases = "Sequencing depth (bases)")) %>%
+  ggplot(aes(x = value, y = score)) +
+  geom_point(size = 1.2, alpha = 0.7, colour = "grey30") +
+  geom_smooth(method = "lm", colour = "#ba2760", fill = "#ba2760", alpha = 0.15) +
+  facet_grid(axis ~ variable, scales = "free") +
+  scale_x_log10() +
+  labs(x = NULL, y = "RLQ score")
+```
+
+Each axis responds to its own driver and is comparatively flat against the
+other's. That separation is what RLQ was asked to find, and it is why the two
+can be interpreted independently: axis 1 is about *how much*, axis 2 about
+*which*.
+
+## Which bacteria sit at each end?
+
+Because genomes live on the same axes, we can ask what distinguishes the two
+ends of the caecum gradient. First, taxonomically:
+
+```{r genome_axis_order, warning = FALSE, message = FALSE, fig.height = 5, fig.width = 7}
+caecum_genomes %>%
+  add_count(order) %>%
+  filter(n >= 2) %>%
+  mutate(order = fct_reorder(order, axis2)) %>%
+  ggplot(aes(x = axis2, y = order, colour = order)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
+  geom_point(size = 2, alpha = 0.8) +
+  stat_summary(fun = median, geom = "point", shape = 124, size = 8,
+               colour = "grey20") +
+  scale_colour_manual(values = order_colors, guide = "none") +
+  labs(x = "Caecum axis 2  (gut wall → lumen)", y = NULL)
+```
+
+Then by what those genomes can do. GIFT traits are grouped into broad functions,
+of which the degradation functions are the biologically interesting ones here:
+
+```{r genome_axis_function, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 9}
+gift_functions <- gifts_used %>%
+  to.elements(GIFT_db_df) %>%
+  to.functions(GIFT_db_df) %>%
+  as.data.frame() %>%
+  rownames_to_column("genome")
+
+caecum_traits <- caecum_genomes %>%
+  left_join(gift_functions, by = "genome") %>%
+  mutate(genome_size_mb = length / 1e6,
+         carb_minus_lipid = D02 - D01)
+
+caecum_traits %>%
+  select(axis2, `Genome size (Mb)` = genome_size_mb,
+         `Polysaccharide degradation (D02)` = D02,
+         `Carbohydrate − lipid degradation` = carb_minus_lipid) %>%
+  pivot_longer(-axis2, names_to = "trait", values_to = "value") %>%
+  ggplot(aes(x = axis2, y = value)) +
+  geom_point(size = 1.4, alpha = 0.7, colour = "grey30") +
+  geom_smooth(method = "lm", colour = "#2A9D8F", fill = "#2A9D8F",
+              alpha = 0.15) +
+  facet_wrap(~ trait, scales = "free_y") +
+  labs(x = "Caecum axis 2  (gut wall → lumen)", y = NULL)
+```
+
+```{r trait_correlations, warning = FALSE, message = FALSE}
+tibble(
+  trait = c("genome size", "polysaccharide degradation (D02)",
+            "lipid degradation (D01)", "carbohydrate − lipid"),
+  spearman_rho = c(
+    cor(caecum_traits$axis2, caecum_traits$genome_size_mb, method = "spearman"),
+    cor(caecum_traits$axis2, caecum_traits$D02, method = "spearman"),
+    cor(caecum_traits$axis2, caecum_traits$D01, method = "spearman"),
+    cor(caecum_traits$axis2, caecum_traits$carb_minus_lipid, method = "spearman")
+  ) %>% round(2)
+)
+```
+
+## The gradient on the phylogeny
+
+Finally, colour the tree by each genome's axis-2 score. If the gradient
+separates whole clades rather than scattered tips, it is evolutionarily
+conserved — bacteria inherit where they live.
+
+```{r tree_gradient, warning = FALSE, message = FALSE, fig.height = 9, fig.width = 7}
+caecum_tree <- keep.tip(genome_tree, caecum_genomes$genome)
+
+plot_tree_gradient(caecum_tree, caecum_genomes, "axis2",
+                   "Caecum axis 2", colours = order_colors)
+```
+
+```{r phylo_signal, warning = FALSE, message = FALSE}
+axis2_by_genome <- setNames(caecum_genomes$axis2, caecum_genomes$genome)
+
+phytools::phylosig(caecum_tree, axis2_by_genome[caecum_tree$tip.label],
+                   method = "K", test = TRUE)
+```
+
+Blomberg's *K* above 1 with a significant p-value means closely related genomes
+occupy the same end of the gradient **more** than a random walk along the tree
+would produce. The spatial preference is phylogenetically conserved.
+
+## What the analysis found
+
+Putting the three pieces together for caecum section G121eI117A:
+
+| | **Near the gut wall** | **Out in the lumen** |
+|---|---|---|
+| Axis 2 score | low | high |
+| Genome size | smaller | larger |
+| Metabolism | relatively more lipid-oriented | more polysaccharide degradation |
+| Taxa | Erysipelotrichales, Lactobacillales, Coriobacteriales | Lachnospirales, UBA1381 |
+
+This is a biologically coherent story. Complex plant polysaccharides arrive in
+the lumen, and degrading them needs large gene repertoires — hence larger
+genomes with more carbohydrate-active machinery further from the wall. Close to
+the epithelium the substrates are host-derived instead, and the bacteria there
+are smaller and differently equipped.
+
+::: {.rmdnote}
+**And it took the right method to see it.** The same data, analysed by PCA and
+PERMANOVA in Chapter \@ref(space), put this gradient on axis 3 and reported it
+as non-significant. It occupies a small share of total compositional variance —
+it was never going to be axis 1 of anything. RLQ found it because it looked for
+covariance between space and biology rather than for variance alone.
+
+**And the protocol made it findable.** Because libraries were pooled without
+normalisation, biomass entered the analysis as a measured variable instead of
+hiding inside the composition. RLQ could give it axis 1 and hand back a clean
+axis 2. Under equimolar pooling the biomass differences would have been
+flattened away, and the variation they cause would still have been in the
+community table — unlabelled, unmodelled, and impossible to separate from the
+gradient.
+:::

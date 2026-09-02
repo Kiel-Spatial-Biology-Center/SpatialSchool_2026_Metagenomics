@@ -1,0 +1,186 @@
+# Exercises {#exercises}
+
+Every exercise below can be answered with the objects already built in
+Chapters \@ref(data)–\@ref(rlq). Run the three chapters first, or paste their
+setup chunks into a fresh session.
+
+Exercises marked **★** are the ones worth doing if time is short.
+
+## Set 1 — The coverage filter {-}
+
+The 0.3 breadth-of-coverage threshold was presented as a given. It is a choice.
+
+**1.1 ★** Rebuild the community table at `min_coverage` values of 0, 0.1, 0.3
+and 0.6. For each, record how many non-zero entries survive, what fraction of
+reads is kept, and the median richness per microsample.
+
+```{r ex_1_1, eval = FALSE}
+map_dfr(c(0, 0.1, 0.3, 0.6), function(threshold) {
+  filtered <- filter_by_coverage(genome_read_counts, genome_coverage, threshold)
+  counts   <- to_genome_counts(filtered, genome_metadata)
+  tibble(
+    threshold       = threshold,
+    nonzero_entries = sum(filtered[, -1] > 0),
+    reads_kept      = sum(filtered[, -1]) / sum(genome_read_counts[, -1]),
+    median_richness = median(colSums(counts[, -1] > 0))
+  )
+})
+```
+
+**1.2** At threshold 0, richness is roughly 220 genomes per microsample — nearly
+the whole catalogue. Why is that not a plausible biological result for a piece
+of tissue a few hundred micrometres across?
+
+**1.3** Re-run the caecum RLQ (Chapter \@ref(rlq)) using a table filtered at 0.1
+and again at 0.6. Does axis 2 still correlate with distance to the gut wall? Is
+the conclusion robust to the threshold, or does it depend on it?
+
+## Set 2 — Compositionality {-}
+
+**2.1** Chapter \@ref(space) replaced zeros before taking logs. Try instead the
+common shortcut of adding a pseudocount of 1 to every value, then CLR-transform
+and redo the PCA. How much does the ordination change? Which genomes move most,
+and what do they have in common?
+
+**2.2 ★** `cmultRepl()` dropped genomes present in fewer than 5% of
+microsamples. Those are rare taxa. Argue both sides: what is lost by discarding
+them, and what would go wrong if we kept them?
+
+**2.3 ★** CLR divides out each microsample's total, and Chapter \@ref(space)
+argued that this is why biomass has to be handed to RLQ separately. Test the
+claim directly: compute each microsample's total genome count, and check whether
+it survives the CLR transformation in any recoverable form.
+
+```{r ex_2_3, eval = FALSE}
+totals <- rowSums(caecum$comm_red)
+
+# does anything in the CLR matrix still track the total?
+cor(rowSums(caecum_clr), log(totals))          # CLR rows sum to zero by construction
+max(abs(cor(caecum_clr, log(totals))))         # any single genome?
+```
+
+Given the answer, would an analysis that used *only* CLR composition be able to
+detect a biomass gradient at all?
+
+## Set 3 — Spatial structure {-}
+
+**3.1 ★** The Gabriel graph was one choice of neighbourhood. Rebuild it as a
+k-nearest-neighbour graph and as a distance-band graph:
+
+```{r ex_3_1, eval = FALSE}
+coords <- as.matrix(caecum_meta[, c("Xcoord", "Ycoord")])
+
+nb_gabriel <- neighbour_graph(coords)
+nb_knn     <- knn2nb(knearneigh(coords, k = 4))
+nb_dist    <- dnearneigh(coords, 0, 400)   # within 400 µm
+
+# how many links does each definition produce?
+map_dbl(list(nb_gabriel, nb_knn, nb_dist), ~ sum(card(.x)))
+```
+
+Recompute Moran's I for distance-to-gut-wall under all three. Does the
+conclusion depend on the neighbourhood definition? Should it?
+
+**3.2 ★** In Chapter \@ref(space), sequencing depth was spatially
+autocorrelated in the caecum (I = 0.14) but not in the colon (I = 0.05, n.s.).
+Under the unnormalised pooling protocol this reads as *biomass is spatially
+patchy in the caecum*. Give one competing explanation that is purely technical,
+and say what you would measure to tell them apart.
+
+**3.3** The microsamples of one cryosection were prepared in four batches
+(`batch`, 42 microsamples each). If batches were laid out spatially rather than
+at random, batch effects would masquerade as biomass patchiness. Check whether
+`batch` is spatially clustered on the section, and whether sequencing depth
+differs between batches.
+
+**3.4 ★** Repeat the shuffled-coordinates null model, but instead of shuffling
+freely, shuffle *within* bands of distance to the gut wall. What does the
+comparison between the two nulls tell you that either alone does not?
+
+## Set 4 — RLQ {-}
+
+**4.1 ★** Table **E** contained three variables: sequencing depth, richness and
+distance to the gut wall. Drop distance to the gut wall from `spatial_rlq()` and
+re-run the caecum analysis. Does axis 2 still recover the spatial gradient?
+
+This is the most important exercise in the practical. If the gradient survives,
+RLQ found it through **S** (the neighbourhood structure) and **L** alone, which
+means it is not an artefact of having told the method what to look for.
+
+```{r ex_4_1, eval = FALSE}
+# edit the `env` data frame inside spatial_rlq(), or copy the function and
+# remove the log_host_dist column, then compare:
+#   cor(new_sites$axis2, log(new_sites$distance_host), method = "spearman")
+```
+
+**4.2** RLQ was given the phylogeny (**P**) *and* metabolic traits (**T**), and
+Chapter \@ref(rlq) showed they carry overlapping information. Re-run with only
+one of them. Which matters more for recovering the gradient?
+
+**4.3 ★** Caecum axis 1 tracked sequencing depth almost perfectly (ρ ≈ 0.93),
+and the practical read that as a **biomass** axis rather than a technical one —
+because libraries were pooled without normalisation.
+
+That interpretation is an argument about protocol, not about the data in front
+of you. Set out what the data could show that would *contradict* it. Then say
+whether any of those checks is possible with the variables in
+`sample_metadata`, and what extra measurement would settle the question
+outright.
+
+**4.4 ★** The colon section showed no gradient. List three explanations that
+have nothing to do with the colon lacking spatial structure, and say how you
+would distinguish them.
+
+## Set 5 — Interpretation {-}
+
+**5.1 ★** The concluding table of Chapter \@ref(rlq) claims that genomes further
+from the gut wall are larger and better equipped for polysaccharide degradation.
+Genome size and polysaccharide-degradation capacity are themselves correlated —
+bigger genomes encode more of everything. Design an analysis that separates the
+two explanations.
+
+**5.2** Blomberg's *K* was 1.5 (p = 0.001): spatial preference is
+phylogenetically conserved. Does that support the metabolic explanation,
+undermine it, or neither?
+
+**5.3** You have one animal and one cryosection per gut region. Write the
+strongest version of the criticism a reviewer would make, and state what the
+study would need to answer it.
+
+## Set 6 — Extension {-}
+
+**6.1** The published study analysed six cryosections — three caecum, three
+colon — and asked whether the same gradient reappeared in each. Describe how you
+would test "the same gradient" quantitatively, given that RLQ axes from separate
+analyses are not directly comparable (different genomes, arbitrary signs,
+different scaling).
+
+**6.2** Microsamples here are 5,000 µm². If you could re-run the experiment at a
+quarter of that area, with four times as many microsamples and the same total
+sequencing cost, would you? Argue it in terms of what Chapter \@ref(space)
+showed about sequencing depth — and remember that under unnormalised pooling the
+faintest microsamples receive very few reads rather than a guaranteed share.
+
+**6.3 ★** Suppose a reviewer insists you pool equimolarly, as standard practice
+requires. Write the paragraph you would send back. What is lost, what is gained,
+and is there a design that gets both?
+
+---
+
+## Where to go next {-}
+
+The full analysis behind the manuscript — method validation against FISH
+microscopy and conventional metagenomics, genome-catalogue comparison,
+contamination assessment, strain-level microdiversity, and the six-cryosection
+replication — is at
+[github.com/3d-omics/MSSM](https://github.com/3d-omics/MSSM).
+
+**Key references**
+
+- Pavoine S., Rodríguez-Gironés M.A. & Cabana J. (2011) Extended RLQ: linking
+  environment, space, traits and phylogeny. *Journal of Ecology*.
+- Dray S. & Legendre P. (2008) Testing the species traits–environment
+  relationships: the fourth-corner problem revisited. *Ecology*.
+- Aitchison J. (1986) *The Statistical Analysis of Compositional Data*.
+- Gloor G.B. *et al.* (2017) Microbiome datasets are compositional: and this is
+  not optional. *Frontiers in Microbiology*.
