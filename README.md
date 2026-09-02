@@ -13,7 +13,7 @@ It keeps only what is needed to understand **how spatial structure in a gut
 microbiome is detected and tested**, and drops the method validation,
 benchmarking and strain-level analyses of the published work.
 
-## What students learn
+## Contents
 
 | Chapter | Question | Methods |
 |---|---|---|
@@ -22,24 +22,19 @@ benchmarking and strain-level analyses of the published work.
 | 3 · RLQ | What explains the structure? | Extended RLQ (environment + space + traits + phylogeny) |
 | 4 · Exercises | Does it hold up? | Thresholds, null models, table ablation, interpretation |
 
-The arc is deliberate. Chapter 2 applies the standard microbial ecology toolkit
-and **finds nothing**: the gradient turns out to sit on PCA axis 3, below an
-axis of unstructured turnover and an axis of microbial biomass. Chapter 3 shows
-why — PCA ranks axes by variance, not relevance — and recovers the gradient with
-extended RLQ, which maximises covariance between what we know about microsamples
-and what we know about genomes. It runs from the gut wall into the lumen, with
-larger, more polysaccharide-oriented genomes further out.
-
-Students see a real analysis where the obvious method gives the wrong answer.
+Chapter 2 asks whether the community is spatially structured, using the standard
+microbial ecology toolkit. Chapter 3 comes back to the same data with extended
+RLQ, which maximises covariance between what we know about microsamples and what
+we know about genomes. Chapter 4 tests how much of the answer survives changed
+thresholds, null models and dropped tables.
 
 The book also takes seriously a protocol detail that is unusual for
 metagenomics: MSSM libraries are **not pooled equimolarly**. Equal microsample
 areas get equal PCR cycles and are pooled as they come, with one cryosection per
 sequencing run. Sequencing depth therefore tracks input biomass instead of being
 equalised away, and composition closes at the cryosection level. This makes
-depth a quasi-quantitative biological variable rather than a nuisance — which is
-why RLQ can give it an axis of its own and hand back a clean spatial axis.
-Chapter 1 verifies the design in the data; Chapters 2 and 3 build on it.
+depth a quasi-quantitative biological variable rather than a nuisance. Chapter 1
+verifies the design in the data; Chapters 2 and 3 build on it.
 
 ## Data
 
@@ -75,7 +70,7 @@ bookdown::render_book(input = ".", output_format = "bookdown::gitbook",
 ```
 
 The whole book renders in a couple of minutes; each RLQ takes about a second, so
-students can re-run and experiment freely.
+you can re-run and experiment freely.
 
 Chapters 2 and 3 rebuild what they need from earlier chapters, so each can also
 be run on its own after `index.Rmd`.
@@ -126,3 +121,6 @@ Full analysis: [github.com/3d-omics/MSSM](https://github.com/3d-omics/MSSM)
 Pietroni C., Langa J., Odriozola I., Bogri A., Alberdi A. *Micro-scale spatial
 metagenomics: revealing high-resolution spatial biogeography of gut
 microbiomes.* https://doi.org/10.1101/2025.09.30.679663
+
+The manuscript is currently under review in PNAS; the preprint above is the
+version to cite in the meantime.
