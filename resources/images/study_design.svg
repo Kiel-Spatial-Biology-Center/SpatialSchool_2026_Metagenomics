@@ -19,66 +19,73 @@
 <text x="52" y="171" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">Laser microdissection</text>
 <rect x="24" y="180" width="430" height="158" rx="8" fill="#f7f9fb" stroke="#cbd5dd" stroke-width="1"/>
 <circle cx="116" cy="262" r="66" fill="#eef2f6" stroke="#cbd5dd"/>
-<circle cx="116" cy="262" r="26" fill="#ffffff" stroke="#cbd5dd" stroke-dasharray="3 3"/>
-<text x="116" y="265" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" fill="#5b6b7a" font-weight="normal" text-anchor="middle">lumen</text>
-<circle cx="100.6" cy="292.9" r="3.4" fill="#2A9D8F" opacity="0.39"/>
-<circle cx="76.1" cy="252.8" r="1.9" fill="#2A9D8F" opacity="0.65"/>
-<circle cx="157.8" cy="272.0" r="2.0" fill="#2A9D8F" opacity="0.40"/>
-<circle cx="67.2" cy="287.0" r="2.1" fill="#2A9D8F" opacity="0.48"/>
-<circle cx="75.3" cy="220.1" r="3.2" fill="#2A9D8F" opacity="0.59"/>
-<circle cx="147.0" cy="257.3" r="3.9" fill="#2A9D8F" opacity="0.52"/>
-<circle cx="136.7" cy="288.4" r="2.5" fill="#2A9D8F" opacity="0.84"/>
-<circle cx="136.0" cy="305.0" r="3.3" fill="#2A9D8F" opacity="0.57"/>
-<circle cx="85.5" cy="252.6" r="1.9" fill="#2A9D8F" opacity="0.47"/>
-<circle cx="97.9" cy="223.2" r="2.6" fill="#2A9D8F" opacity="0.70"/>
-<circle cx="78.7" cy="273.3" r="3.7" fill="#2A9D8F" opacity="0.77"/>
-<circle cx="117.8" cy="309.2" r="3.1" fill="#2A9D8F" opacity="0.88"/>
-<circle cx="111.0" cy="223.7" r="4.2" fill="#2A9D8F" opacity="0.42"/>
-<circle cx="70.1" cy="287.9" r="2.2" fill="#2A9D8F" opacity="0.64"/>
-<circle cx="164.5" cy="274.2" r="3.6" fill="#2A9D8F" opacity="0.69"/>
-<circle cx="144.0" cy="234.2" r="3.5" fill="#2A9D8F" opacity="0.71"/>
-<circle cx="77.7" cy="241.0" r="3.8" fill="#2A9D8F" opacity="0.92"/>
-<circle cx="66.7" cy="270.1" r="1.9" fill="#2A9D8F" opacity="0.77"/>
-<circle cx="80.0" cy="214.3" r="3.8" fill="#2A9D8F" opacity="0.52"/>
-<circle cx="78.3" cy="294.9" r="1.9" fill="#2A9D8F" opacity="0.63"/>
-<circle cx="132.5" cy="291.2" r="1.9" fill="#2A9D8F" opacity="0.81"/>
-<circle cx="141.7" cy="289.2" r="2.7" fill="#2A9D8F" opacity="0.87"/>
-<circle cx="154.0" cy="283.1" r="3.1" fill="#2A9D8F" opacity="0.88"/>
-<circle cx="139.6" cy="211.3" r="2.5" fill="#2A9D8F" opacity="0.60"/>
-<circle cx="80.3" cy="305.8" r="4.1" fill="#2A9D8F" opacity="0.44"/>
-<circle cx="132.5" cy="295.1" r="2.4" fill="#2A9D8F" opacity="0.64"/>
-<circle cx="83.9" cy="241.9" r="1.8" fill="#2A9D8F" opacity="0.60"/>
-<circle cx="84.0" cy="296.4" r="4.1" fill="#2A9D8F" opacity="0.76"/>
-<circle cx="67.7" cy="257.3" r="3.4" fill="#2A9D8F" opacity="0.38"/>
-<circle cx="159.1" cy="230.5" r="3.9" fill="#2A9D8F" opacity="0.83"/>
-<circle cx="83.3" cy="288.3" r="2.0" fill="#2A9D8F" opacity="0.73"/>
-<circle cx="145.6" cy="274.2" r="2.3" fill="#2A9D8F" opacity="0.45"/>
-<circle cx="99.1" cy="288.7" r="1.8" fill="#2A9D8F" opacity="0.44"/>
-<circle cx="148.9" cy="286.3" r="1.9" fill="#2A9D8F" opacity="0.87"/>
-<circle cx="90.0" cy="239.4" r="2.4" fill="#2A9D8F" opacity="0.56"/>
-<circle cx="93.9" cy="287.4" r="3.8" fill="#2A9D8F" opacity="0.95"/>
-<circle cx="72.5" cy="271.4" r="2.0" fill="#2A9D8F" opacity="0.41"/>
-<circle cx="95.1" cy="293.7" r="3.8" fill="#2A9D8F" opacity="0.45"/>
-<circle cx="173.9" cy="270.5" r="3.1" fill="#2A9D8F" opacity="0.44"/>
-<circle cx="86.3" cy="253.7" r="3.1" fill="#2A9D8F" opacity="0.94"/>
-<circle cx="149.2" cy="223.5" r="2.4" fill="#2A9D8F" opacity="0.57"/>
-<circle cx="142.5" cy="308.1" r="3.1" fill="#2A9D8F" opacity="0.82"/>
-<circle cx="98.4" cy="294.2" r="3.7" fill="#2A9D8F" opacity="0.94"/>
-<circle cx="148.6" cy="218.7" r="3.8" fill="#2A9D8F" opacity="0.79"/>
-<circle cx="122.6" cy="307.0" r="2.7" fill="#2A9D8F" opacity="0.37"/>
-<circle cx="153.8" cy="268.7" r="2.4" fill="#2A9D8F" opacity="0.77"/>
-<circle cx="157.8" cy="250.3" r="4.0" fill="#2A9D8F" opacity="0.94"/>
-<circle cx="155.3" cy="250.6" r="2.3" fill="#2A9D8F" opacity="0.49"/>
-<circle cx="127.9" cy="296.1" r="3.3" fill="#2A9D8F" opacity="0.89"/>
-<circle cx="139.9" cy="224.6" r="3.4" fill="#2A9D8F" opacity="0.83"/>
-<circle cx="158.9" cy="287.3" r="4.0" fill="#2A9D8F" opacity="0.82"/>
-<circle cx="116.0" cy="217.7" r="2.2" fill="#2A9D8F" opacity="0.82"/>
-<path d="M116,196 L116,236" stroke="#1f2933" stroke-width="1.2" stroke-dasharray="2 2"/>
-<circle cx="116" cy="196" r="2.4" fill="#1f2933"/>
-<circle cx="116" cy="236" r="2.4" fill="#1f2933"/>
-<rect x="122" y="206" width="74" height="26" rx="4" fill="#ffffff" opacity="0.92"/>
-<text x="128" y="217" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" fill="#1f2933" font-weight="normal" text-anchor="start">distance to</text>
-<text x="128" y="227" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" fill="#1f2933" font-weight="normal" text-anchor="start">gut wall</text>
+<circle cx="105.6" cy="282.8" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="106.6" cy="248.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="80.6" cy="253.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="155.9" cy="277.2" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="132.4" cy="269.7" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="67.5" cy="286.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="136.2" cy="281.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="75.3" cy="220.1" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="128.8" cy="260.1" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="136.3" cy="236.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="96.5" cy="312.6" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="135.3" cy="303.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="92.5" cy="233.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="99.4" cy="226.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="84.6" cy="271.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="129.8" cy="213.8" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="117.7" cy="307.4" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="60.6" cy="253.2" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="111.9" cy="230.1" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="120.2" cy="216.8" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="80.5" cy="242.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="147.2" cy="212.8" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="67.7" cy="269.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="79.0" cy="294.3" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="126.1" cy="279.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="109.1" cy="300.1" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="80.4" cy="305.7" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="138.5" cy="255.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="154.8" cy="263.0" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="163.7" cy="247.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="158.8" cy="230.7" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="86.4" cy="285.7" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="154.0" cy="290.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="171.4" cy="271.0" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="93.4" cy="257.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="106.5" cy="259.4" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="148.7" cy="224.1" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="138.4" cy="206.8" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="109.7" cy="270.0" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="171.0" cy="239.0" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="150.8" cy="251.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="121.3" cy="290.1" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="138.4" cy="227.0" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="85.3" cy="218.0" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="149.1" cy="305.3" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="89.8" cy="297.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="120.9" cy="267.3" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="66.6" cy="233.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="109.1" cy="217.8" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="66.1" cy="243.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="150.1" cy="241.1" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="98.4" cy="208.7" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="127.9" cy="243.2" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="127.1" cy="319.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="170.6" cy="258.5" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="170.8" cy="285.4" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="111.1" cy="320.6" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="143.8" cy="295.3" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="112.2" cy="202.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="144.9" cy="273.6" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="94.7" cy="268.9" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<circle cx="105.0" cy="237.7" r="3.0" fill="#2A9D8F" opacity="0.75"/>
+<path d="M105.0,237.7 L88.9,201.8" stroke="#1f2933" stroke-width="1.2" stroke-dasharray="2 2"/>
+<circle cx="88.9" cy="201.8" r="2.4" fill="#1f2933"/>
+<rect x="113.0" y="206.7" width="70" height="25" rx="4" fill="#ffffff" opacity="0.9"/>
+<text x="118.02124898729355" y="217.74679154584868" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" fill="#1f2933" font-weight="normal" text-anchor="start">distance to</text>
+<text x="118.02124898729355" y="227.74679154584868" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" fill="#1f2933" font-weight="normal" text-anchor="start">gut wall</text>
 <text x="202" y="216" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" fill="#1f2933" font-weight="bold" text-anchor="start">168</text>
 <text x="202" y="229" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="10" fill="#5b6b7a" font-weight="normal" text-anchor="start">microsamples per section</text>
 <text x="202" y="246" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" fill="#1f2933" font-weight="bold" text-anchor="start">5,000 µm²</text>
@@ -86,7 +93,7 @@
 <text x="202" y="276" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" fill="#1f2933" font-weight="bold" text-anchor="start">X, Y position</text>
 <text x="202" y="289" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="10" fill="#5b6b7a" font-weight="normal" text-anchor="start">recorded per microsample</text>
 <text x="202" y="306" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" fill="#1f2933" font-weight="bold" text-anchor="start">≈ biomass</text>
-<text x="202" y="319" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="10" fill="#5b6b7a" font-weight="normal" text-anchor="start">dot size above</text>
+<text x="202" y="319" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="10" fill="#5b6b7a" font-weight="normal" text-anchor="start">sequencing depth</text>
 <circle cx="34" cy="368" r="10" fill="#1f2933"/>
 <text x="34" y="372" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" fill="#ffffff" font-weight="bold" text-anchor="middle">3</text>
 <text x="52" y="373" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">Libraries and sequencing</text>

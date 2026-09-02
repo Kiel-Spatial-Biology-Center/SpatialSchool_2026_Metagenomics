@@ -65,30 +65,38 @@ panel(LX, 180, LW, 158)
 random.seed(7)
 cx, cy, rr = LX + 92, 262, 66
 A(f'<circle cx="{cx}" cy="{cy}" r="{rr}" fill="#eef2f6" stroke="{RULE}"/>')
-A(f'<circle cx="{cx}" cy="{cy}" r="26" fill="#ffffff" stroke="{RULE}" '
-  f'stroke-dasharray="3 3"/>')
-txt(cx, cy + 3, "lumen", 9, MUTED, "normal", "middle")
-for _ in range(52):
+
+DOT = 3.0
+pts = []
+while len(pts) < 62:
     a = random.uniform(0, 2 * math.pi)
-    d = random.uniform(30, rr - 6)
+    d = (rr - DOT - 3) * math.sqrt(random.random())
     px, py = cx + d * math.cos(a), cy + d * math.sin(a)
-    A(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{random.uniform(1.8, 4.2):.1f}" '
-      f'fill="{CAEC}" opacity="{random.uniform(0.35, 0.95):.2f}"/>')
-A(f'<path d="M{cx},{cy - rr} L{cx},{cy - 26}" stroke="{INK}" stroke-width="1.2" '
-  f'stroke-dasharray="2 2"/>')
-A(f'<circle cx="{cx}" cy="{cy - rr}" r="2.4" fill="{INK}"/>')
-A(f'<circle cx="{cx}" cy="{cy - 26}" r="2.4" fill="{INK}"/>')
-A(f'<rect x="{cx + 6}" y="{cy - 56}" width="74" height="26" rx="4" fill="#ffffff" '
-  f'opacity="0.92"/>')
-txt(cx + 12, cy - 45, "distance to", 9, INK)
-txt(cx + 12, cy - 35, "gut wall", 9, INK)
+    if all((px - qx) ** 2 + (py - qy) ** 2 > 100 for qx, qy in pts):
+        pts.append((px, py))
+for px, py in pts:
+    A(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{DOT}" fill="{CAEC}" '
+      f'opacity="0.75"/>')
+
+# distance from one microsample to the gut wall
+sx, sy = min(pts, key=lambda q: (q[0] - (cx - 16)) ** 2 + (q[1] - (cy - 26)) ** 2)
+ang = math.atan2(sy - cy, sx - cx)
+wx, wy = cx + rr * math.cos(ang), cy + rr * math.sin(ang)
+A(f'<path d="M{sx:.1f},{sy:.1f} L{wx:.1f},{wy:.1f}" stroke="{INK}" '
+  f'stroke-width="1.2" stroke-dasharray="2 2"/>')
+A(f'<circle cx="{wx:.1f}" cy="{wy:.1f}" r="2.4" fill="{INK}"/>')
+lbx, lby = sx + 8, (sy + wy) / 2 - 13
+A(f'<rect x="{lbx:.1f}" y="{lby:.1f}" width="70" height="25" rx="4" '
+  f'fill="#ffffff" opacity="0.9"/>')
+txt(lbx + 5, lby + 11, "distance to", 9, INK)
+txt(lbx + 5, lby + 21, "gut wall", 9, INK)
 
 tx = LX + 178
 for i, (lab, val) in enumerate([
         ("microsamples per section", "168"),
         ("area of each", "5,000 µm²"),
         ("recorded per microsample", "X, Y position"),
-        ("dot size above", "≈ biomass")]):
+        ("sequencing depth", "≈ biomass")]):
     y = 216 + i * 30
     txt(tx, y, val, 12, INK, "bold")
     txt(tx, y + 13, lab, 10, MUTED)
