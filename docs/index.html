@@ -2078,12 +2078,13 @@ white-space: inherit;
 <ul>
 <li class="chapter" data-level="1.3.1" data-path="index.html"><a href="index.html#a-deliberately-unnormalised-protocol"><i class="fa fa-check"></i><b>1.3.1</b> A deliberately unnormalised protocol</a></li>
 </ul></li>
-<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#setting-up"><i class="fa fa-check"></i><b>1.4</b> Setting up</a>
+<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#the-study-behind-it"><i class="fa fa-check"></i><b>1.4</b> The study behind it</a></li>
+<li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#setting-up"><i class="fa fa-check"></i><b>1.5</b> Setting up</a>
 <ul>
-<li class="chapter" data-level="1.4.1" data-path="index.html"><a href="index.html#packages"><i class="fa fa-check"></i><b>1.4.1</b> Packages</a></li>
-<li class="chapter" data-level="1.4.2" data-path="index.html"><a href="index.html#colours-and-theme"><i class="fa fa-check"></i><b>1.4.2</b> Colours and theme</a></li>
-<li class="chapter" data-level="1.4.3" data-path="index.html"><a href="index.html#helper-functions"><i class="fa fa-check"></i><b>1.4.3</b> Helper functions</a></li>
-<li class="chapter" data-level="1.4.4" data-path="index.html"><a href="index.html#loading-the-data"><i class="fa fa-check"></i><b>1.4.4</b> Loading the data</a></li>
+<li class="chapter" data-level="1.5.1" data-path="index.html"><a href="index.html#packages"><i class="fa fa-check"></i><b>1.5.1</b> Packages</a></li>
+<li class="chapter" data-level="1.5.2" data-path="index.html"><a href="index.html#colours-and-theme"><i class="fa fa-check"></i><b>1.5.2</b> Colours and theme</a></li>
+<li class="chapter" data-level="1.5.3" data-path="index.html"><a href="index.html#helper-functions"><i class="fa fa-check"></i><b>1.5.3</b> Helper functions</a></li>
+<li class="chapter" data-level="1.5.4" data-path="index.html"><a href="index.html#loading-the-data"><i class="fa fa-check"></i><b>1.5.4</b> Loading the data</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="2" data-path="data.html"><a href="data.html"><i class="fa fa-check"></i><b>2</b> What a microsample looks like</a>
@@ -2339,18 +2340,38 @@ enormously between neighbouring pieces of tissue, that variation is part of the
 spatial biology being studied, and equimolar pooling would erase it.</p>
 </div>
 <div class="rmdnote">
-<p><strong>This is a simplified version.</strong> The published study also validated the method
-against FISH microscopy and conventional metagenomics, compared genome
-catalogues, quantified contamination, and analysed strain-level variation. None
-of that is here. The full analysis lives at
+<p><strong>This is a simplified version.</strong> The practical was extracted from the
+repository that accompanies the manuscript and cut down to what fits a course
+session. The published study also validated the method against FISH microscopy
+and conventional metagenomics, compared genome catalogues, quantified
+contamination, and analysed strain-level variation. None of that is here. The
+original, full analysis lives at
 <a href="https://github.com/3d-omics/MSSM">github.com/3d-omics/MSSM</a>.</p>
 </div>
 </div>
 </div>
-<div id="setting-up" class="section level2 hasAnchor" number="1.4">
-<h2><span class="header-section-number">1.4</span> Setting up<a href="index.html#setting-up" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div id="packages" class="section level3 hasAnchor" number="1.4.1">
-<h3><span class="header-section-number">1.4.1</span> Packages<a href="index.html#packages" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="the-study-behind-it" class="section level2 hasAnchor" number="1.4">
+<h2><span class="header-section-number">1.4</span> The study behind it<a href="index.html#the-study-behind-it" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>The data and the analysis come from:</p>
+<blockquote>
+<p>Carlotta Pietroni<sup>†</sup>, Bryan Wang<sup>†</sup>, Amalia Bogri<sup>†</sup>, Jorge Langa,
+Iñaki Odriozola, Zoé Horisberger, Marta Contreras-Serrano,
+Jonas Greve Lauritsen, Nanna Gaun, Amalia Toffano, Anders Miki Bojesen,
+Ida Thøfner, Victoria Drauch, Jaime Ramirez Cerrillos,
+Søren Johannes Sørensen, Urvish Trivedi<sup>*</sup>, Antton Alberdi<sup>*</sup>.
+<em>Micro-scale spatial metagenomics: revealing high-resolution spatial
+biogeography of gut microbiomes.</em>
+<a href="https://doi.org/10.1101/2025.09.30.679663" class="uri">https://doi.org/10.1101/2025.09.30.679663</a></p>
+<p><sup>†</sup> equal contribution · <sup>*</sup> corresponding authors</p>
+</blockquote>
+<p>The work was carried out within <a href="http://www.3domics.eu">3D’omics</a> (Horizon
+2020). The manuscript is under review in PNAS; the preprint above is the version
+to cite in the meantime.</p>
+</div>
+<div id="setting-up" class="section level2 hasAnchor" number="1.5">
+<h2><span class="header-section-number">1.5</span> Setting up<a href="index.html#setting-up" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="packages" class="section level3 hasAnchor" number="1.5.1">
+<h3><span class="header-section-number">1.5.1</span> Packages<a href="index.html#packages" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r script-source"><code class="sourceCode r"><span id="cb2-1"><a href="index.html#cb2-1" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">&quot;pacman&quot;</span>)) <span class="fu">install.packages</span>(<span class="st">&quot;pacman&quot;</span>)</span>
 <span id="cb2-2"><a href="index.html#cb2-2" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="index.html#cb2-3" tabindex="-1"></a><span class="co"># CRAN</span></span>
@@ -2378,8 +2399,8 @@ of that is here. The full analysis lives at
 <span id="cb2-25"><a href="index.html#cb2-25" tabindex="-1"></a></span>
 <span id="cb2-26"><a href="index.html#cb2-26" tabindex="-1"></a>select <span class="ot">&lt;-</span> dplyr<span class="sc">::</span>select</span></code></pre></div>
 </div>
-<div id="colours-and-theme" class="section level3 hasAnchor" number="1.4.2">
-<h3><span class="header-section-number">1.4.2</span> Colours and theme<a href="index.html#colours-and-theme" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="colours-and-theme" class="section level3 hasAnchor" number="1.5.2">
+<h3><span class="header-section-number">1.5.2</span> Colours and theme<a href="index.html#colours-and-theme" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>One palette for bacterial orders, used consistently everywhere, so a colour
 means the same thing in every figure of this book.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r script-source"><code class="sourceCode r"><span id="cb3-1"><a href="index.html#cb3-1" tabindex="-1"></a>phylum_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
@@ -2429,8 +2450,8 @@ means the same thing in every figure of this book.</p>
 <span id="cb3-45"><a href="index.html#cb3-45" tabindex="-1"></a></span>
 <span id="cb3-46"><a href="index.html#cb3-46" tabindex="-1"></a><span class="fu">theme_set</span>(mssm_theme)</span></code></pre></div>
 </div>
-<div id="helper-functions" class="section level3 hasAnchor" number="1.4.3">
-<h3><span class="header-section-number">1.4.3</span> Helper functions<a href="index.html#helper-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="helper-functions" class="section level3 hasAnchor" number="1.5.3">
+<h3><span class="header-section-number">1.5.3</span> Helper functions<a href="index.html#helper-functions" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>The steps that would otherwise be twenty lines of bookkeeping are wrapped in
 functions. Open
 <a href="resources/scripts/practical_functions.R"><code>resources/scripts/practical_functions.R</code></a>
@@ -2439,8 +2460,8 @@ explaining the reasoning, not just the mechanics.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r script-source"><code class="sourceCode r"><span id="cb4-1"><a href="index.html#cb4-1" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;resources/scripts/rlqESLTP.R&quot;</span>)           <span class="co"># extended RLQ (Pavoine et al. 2011)</span></span>
 <span id="cb4-2"><a href="index.html#cb4-2" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;resources/scripts/practical_functions.R&quot;</span>) <span class="co"># everything else</span></span></code></pre></div>
 </div>
-<div id="loading-the-data" class="section level3 hasAnchor" number="1.4.4">
-<h3><span class="header-section-number">1.4.4</span> Loading the data<a href="index.html#loading-the-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="loading-the-data" class="section level3 hasAnchor" number="1.5.4">
+<h3><span class="header-section-number">1.5.4</span> Loading the data<a href="index.html#loading-the-data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r script-source"><code class="sourceCode r"><span id="cb5-1"><a href="index.html#cb5-1" tabindex="-1"></a><span class="fu">load</span>(<span class="st">&quot;resources/data/mssm_practical_data.Rdata&quot;</span>)</span>
 <span id="cb5-2"><a href="index.html#cb5-2" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="index.html#cb5-3" tabindex="-1"></a>pixel_coords <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;resources/images/microsample_pixel_coords.csv&quot;</span>,</span>

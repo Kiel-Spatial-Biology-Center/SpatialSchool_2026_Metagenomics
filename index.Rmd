@@ -146,12 +146,33 @@ spatial biology being studied, and equimolar pooling would erase it.
 :::
 
 ::: {.rmdnote}
-**This is a simplified version.** The published study also validated the method
-against FISH microscopy and conventional metagenomics, compared genome
-catalogues, quantified contamination, and analysed strain-level variation. None
-of that is here. The full analysis lives at
+**This is a simplified version.** The practical was extracted from the
+repository that accompanies the manuscript and cut down to what fits a course
+session. The published study also validated the method against FISH microscopy
+and conventional metagenomics, compared genome catalogues, quantified
+contamination, and analysed strain-level variation. None of that is here. The
+original, full analysis lives at
 [github.com/3d-omics/MSSM](https://github.com/3d-omics/MSSM).
 :::
+
+## The study behind it
+
+The data and the analysis come from:
+
+> Carlotta Pietroni^†^, Bryan Wang^†^, Amalia Bogri^†^, Jorge Langa,
+> Iñaki Odriozola, Zoé Horisberger, Marta Contreras-Serrano,
+> Jonas Greve Lauritsen, Nanna Gaun, Amalia Toffano, Anders Miki Bojesen,
+> Ida Thøfner, Victoria Drauch, Jaime Ramirez Cerrillos,
+> Søren Johannes Sørensen, Urvish Trivedi^\*^, Antton Alberdi^\*^.
+> *Micro-scale spatial metagenomics: revealing high-resolution spatial
+> biogeography of gut microbiomes.*
+> <https://doi.org/10.1101/2025.09.30.679663>
+>
+> ^†^ equal contribution · ^\*^ corresponding authors
+
+The work was carried out within [3D'omics](http://www.3domics.eu) (Horizon
+2020). The manuscript is under review in PNAS; the preprint above is the version
+to cite in the meantime.
 
 ## Setting up
 

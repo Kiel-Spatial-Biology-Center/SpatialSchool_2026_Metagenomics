@@ -169,11 +169,23 @@ and is there a design that gets both?
 
 ## Where to go next {-}
 
-The full analysis behind the manuscript — method validation against FISH
+This practical is a simplified version of the study's original analysis, which
+it was extracted from. The full version — method validation against FISH
 microscopy and conventional metagenomics, genome-catalogue comparison,
 contamination assessment, strain-level microdiversity, and the six-cryosection
 replication — is at
 [github.com/3d-omics/MSSM](https://github.com/3d-omics/MSSM).
+
+**The study**
+
+Carlotta Pietroni^†^, Bryan Wang^†^, Amalia Bogri^†^, Jorge Langa,
+Iñaki Odriozola, Zoé Horisberger, Marta Contreras-Serrano,
+Jonas Greve Lauritsen, Nanna Gaun, Amalia Toffano, Anders Miki Bojesen,
+Ida Thøfner, Victoria Drauch, Jaime Ramirez Cerrillos, Søren Johannes Sørensen,
+Urvish Trivedi^\*^, Antton Alberdi^\*^. *Micro-scale spatial metagenomics:
+revealing high-resolution spatial biogeography of gut microbiomes.*
+<https://doi.org/10.1101/2025.09.30.679663>
+(^†^ equal contribution · ^\*^ corresponding authors)
 
 **Key references**
 

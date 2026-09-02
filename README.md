@@ -6,6 +6,10 @@ A teaching version of the analysis behind *"Micro-scale spatial metagenomics:
 revealing high-resolution spatial biogeography of gut microbiomes"*
 ([3D'omics](http://www.3domics.eu), Horizon 2020).
 
+This repository is a **simplified version** of the study's original analysis,
+which lives at [github.com/3d-omics/MSSM](https://github.com/3d-omics/MSSM) —
+the practical was extracted from it and reduced to what fits a course session.
+
 **Read the book online:**
 <https://kiel-spatial-biology-center.github.io/SpatialSchool_2026_Metagenomics>
 
@@ -118,9 +122,15 @@ Full analysis: [github.com/3d-omics/MSSM](https://github.com/3d-omics/MSSM)
 
 ## Citation
 
-Pietroni C., Langa J., Odriozola I., Bogri A., Alberdi A. *Micro-scale spatial
-metagenomics: revealing high-resolution spatial biogeography of gut
-microbiomes.* https://doi.org/10.1101/2025.09.30.679663
+Carlotta Pietroni†, Bryan Wang†, Amalia Bogri†, Jorge Langa, Iñaki Odriozola,
+Zoé Horisberger, Marta Contreras-Serrano, Jonas Greve Lauritsen, Nanna Gaun,
+Amalia Toffano, Anders Miki Bojesen, Ida Thøfner, Victoria Drauch,
+Jaime Ramirez Cerrillos, Søren Johannes Sørensen, Urvish Trivedi\*,
+Antton Alberdi\*. *Micro-scale spatial metagenomics: revealing high-resolution
+spatial biogeography of gut microbiomes.*
+https://doi.org/10.1101/2025.09.30.679663
+
+† equal contribution · \* corresponding authors
 
 The manuscript is currently under review in PNAS; the preprint above is the
 version to cite in the meantime.
